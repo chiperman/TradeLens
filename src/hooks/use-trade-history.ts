@@ -100,6 +100,16 @@ export function useTradeHistory() {
     return { error };
   };
 
+  // 删除一条记录
+  const deleteCalculation = async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "请先登录" };
+
+    const { error } = await supabase.from("calculations").delete().eq("id", id);
+    if (!error) await fetchHistory();
+    return { error };
+  };
+
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
@@ -108,6 +118,7 @@ export function useTradeHistory() {
     history, 
     isLoading, 
     saveCalculation, 
+    deleteCalculation,
     refreshHistory: fetchHistory,
     exportToExcel,
     exportToJSON 

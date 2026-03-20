@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Radio, Save, History, User as UserIcon, Coins, Activity } from "lucide-react";
+import { RefreshCw, Radio, Save, History, User as UserIcon, Coins, Activity, Trash2 } from "lucide-react";
 import { AuthComponent } from "@/components/auth-component";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 
@@ -38,7 +38,7 @@ export default function CalculatorPage() {
   const [sellPrice, setSellPrice] = useState<string>("61000");
 
   // Trade History Hook
-  const { history, saveCalculation, exportToExcel, exportToJSON } = useTradeHistory();
+  const { history, saveCalculation, deleteCalculation, exportToExcel, exportToJSON } = useTradeHistory();
 
   // Asset Summary Hook
   const { assets, loading: isAssetsLoading } = useAssets();
@@ -369,16 +369,33 @@ export default function CalculatorPage() {
                       {new Date(item.created_at!).toLocaleString()}
                     </span>
                   </div>
-                  <div className="text-right">
-                    <span
-                      className={`font-bold ${item.profit && item.profit > 0 ? "text-green-600" : "text-muted-foreground"}`}
-                    >
-                      {item.profit
-                        ? `${item.profit.toFixed(2)} USDT`
-                        : item.type === "break_even"
-                          ? "保本记录"
-                          : "---"}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p
+                        className={`font-bold ${item.profit && item.profit > 0 ? "text-green-600" : "text-muted-foreground"}`}
+                      >
+                        {item.profit
+                          ? `${item.profit.toFixed(2)} USDT`
+                          : item.type === "break_even"
+                            ? "保本记录"
+                            : "---"}
+                      </p>
+                    </div>
+                    {user && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                        onClick={async () => {
+                          if (confirm("确定要删除这条记录吗？")) {
+                            const res = await deleteCalculation(item.id!);
+                            if (res.error) alert(res.error);
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))
