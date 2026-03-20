@@ -35,6 +35,7 @@
     - [x] `assets_summary`: 资产汇总视图
 - [x] **用户认证系统**
   - [x] 实现登录/注册页面
+  - [x] 集成 GitHub OAuth 登录
   - [x] 集成 Supabase Auth (Email / Google)
 - [x] **数据保存功能**
   - [x] 实现“保存此笔计算”到数据库历史账本

@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User as UserIcon, LogOut, Settings, LogIn, RefreshCw } from "lucide-react";
+import { User as UserIcon, LogOut, Settings, LogIn, RefreshCw, Github } from "lucide-react";
 import { SettingsModal } from "./settings-modal";
 
 export function AuthComponent() {
@@ -69,6 +69,18 @@ export function AuthComponent() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleGitHubLogin = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) alert(error.message);
+    setLoading(false);
   };
 
   const handleSync = async () => {
@@ -174,6 +186,24 @@ export function AuthComponent() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "登录中..." : "登录"}
               </Button>
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">或者通过第三方登录</span>
+                </div>
+              </div>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full gap-2" 
+                onClick={handleGitHubLogin} 
+                disabled={loading}
+              >
+                <Github className="w-4 h-4" />
+                GitHub 登录
+              </Button>
             </form>
           </TabsContent>
           <TabsContent value="register">
@@ -201,6 +231,24 @@ export function AuthComponent() {
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "注册中..." : "创建账户"}
+              </Button>
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">或者通过第三方登录</span>
+                </div>
+              </div>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full gap-2" 
+                onClick={handleGitHubLogin} 
+                disabled={loading}
+              >
+                <Github className="w-4 h-4" />
+                通过 GitHub 注册
               </Button>
             </form>
           </TabsContent>
