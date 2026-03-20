@@ -6,6 +6,7 @@ import { useBinancePrice } from "@/hooks/use-binance-price";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTradeHistory } from "@/hooks/use-trade-history";
 import { useExchangeRate } from "@/hooks/use-exchange-rate";
+import { useAssets } from "@/hooks/use-assets";
 import { createClient } from "@/lib/supabase";
 import { type User } from "@supabase/supabase-js";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +38,9 @@ export default function CalculatorPage() {
 
   // Trade History Hook
   const { history, saveCalculation } = useTradeHistory();
+
+  // Asset Summary Hook
+  const { assets, loading: isAssetsLoading } = useAssets();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
@@ -283,6 +287,41 @@ export default function CalculatorPage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* 资产持仓概览 */}
+        {user && (
+          <Card className="border-none shadow-none bg-transparent">
+            <CardHeader className="px-0 pb-3">
+              <div className="flex items-center gap-2">
+                <Coins className="w-4 h-4 text-blue-500" />
+                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
+                  资产组合概览
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="px-0 grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {isAssetsLoading ? (
+                <div className="col-span-full py-4 text-center text-xs text-muted-foreground">加载持仓中...</div>
+              ) : assets.length > 0 ? (
+                assets.map((asset) => (
+                  <div key={asset.base_asset} className="bg-muted/30 p-3 rounded-xl border border-muted-foreground/5">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{asset.base_asset}</p>
+                    <p className="text-lg font-mono font-black mt-0.5">
+                      {asset.total_quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Avg: ${asset.average_price.toFixed(2)}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-4 text-center text-xs text-muted-foreground border-2 border-dashed rounded-xl">
+                  暂无持仓数据，请同步 Binance 交易
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* 历史账本简报 */}
         <Card className="border-none shadow-none bg-transparent">
