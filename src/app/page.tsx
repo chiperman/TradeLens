@@ -14,8 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Radio, Save, History, User as UserIcon, Coins } from "lucide-react";
+import { RefreshCw, Radio, Save, History, User as UserIcon, Coins, Activity } from "lucide-react";
 import { AuthComponent } from "@/components/auth-component";
+import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 
 export default function CalculatorPage() {
   const supabase = createClient();
@@ -37,7 +38,7 @@ export default function CalculatorPage() {
   const [sellPrice, setSellPrice] = useState<string>("61000");
 
   // Trade History Hook
-  const { history, saveCalculation } = useTradeHistory();
+  const { history, saveCalculation, exportToExcel, exportToJSON } = useTradeHistory();
 
   // Asset Summary Hook
   const { assets, loading: isAssetsLoading } = useAssets();
@@ -203,12 +204,20 @@ export default function CalculatorPage() {
           </CardContent>
         </Card>
 
-        {/* 计算器 Tabs */}
+        {/* 计算器 & 分析 Tabs */}
         <Tabs defaultValue="break-even" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="break-even">Scenario B (保本预测)</TabsTrigger>
-            <TabsTrigger value="profit">Scenario A (盈亏复盘)</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="break-even">保本预测</TabsTrigger>
+            <TabsTrigger value="profit">盈亏复盘</TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <Activity className="w-3.5 h-3.5" />
+              智能分析
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
 
           <TabsContent value="break-even">
             <Card className="border-primary/20 bg-primary/5">
@@ -326,11 +335,23 @@ export default function CalculatorPage() {
         {/* 历史账本简报 */}
         <Card className="border-none shadow-none bg-transparent">
           <CardHeader className="px-0 pb-3">
-            <div className="flex items-center gap-2">
-              <History className="w-4 h-4 text-muted-foreground" />
-              <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-                最近计算历史
-              </CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
+                  最近计算历史
+                </CardTitle>
+              </div>
+              {user && history.length > 0 && (
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={exportToExcel} className="h-7 text-[10px] font-bold uppercase gap-1">
+                    Excel
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={exportToJSON} className="h-7 text-[10px] font-bold uppercase gap-1">
+                    JSON
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className="px-0 space-y-2">
