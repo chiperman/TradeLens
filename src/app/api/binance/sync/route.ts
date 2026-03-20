@@ -31,8 +31,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "请先在设置中绑定 Binance API Key" }, { status: 404 });
     }
 
-    // 💡 调试提示：在实际生产中，keys.api_secret_encrypted 应用一种加密算法解密
-    const { api_key_encrypted: apiKey, api_secret_encrypted: apiSecret } = keys;
+    const { decrypt } = await import("@/lib/crypto");
+    const apiKey = decrypt(keys.api_key_encrypted);
+    const apiSecret = decrypt(keys.api_secret_encrypted);
 
     // 3. 执行同步逻辑 (演示以 BTCUSDT 为例)
     const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]; // 动态化

@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User as UserIcon, LogOut, Settings, LogIn, RefreshCw } from "lucide-react";
+import { SettingsModal } from "./settings-modal";
 
 export function AuthComponent() {
   const supabase = createClient();
@@ -32,6 +33,8 @@ export function AuthComponent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
@@ -92,33 +95,36 @@ export function AuthComponent() {
 
   if (user) {
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <UserIcon className="w-5 h-5 text-primary" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>我的账户</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-xs text-muted-foreground">
-            {user.email}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleSync} disabled={loading}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            <span>{loading ? "同步中..." : "立即同步交易"}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>设置</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>登出</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <UserIcon className="w-5 h-5 text-primary" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>我的账户</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-xs text-muted-foreground">
+              {user.email}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSync} disabled={loading}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              <span>{loading ? "同步中..." : "立即同步交易"}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>设置</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>登出</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <SettingsModal isOpen={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      </>
     );
   }
 
