@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User as UserIcon, LogOut, Settings, LogIn } from "lucide-react";
+import { User as UserIcon, LogOut, Settings, LogIn, RefreshCw } from "lucide-react";
 
 export function AuthComponent() {
   const supabase = createClient();
@@ -68,6 +68,28 @@ export function AuthComponent() {
     await supabase.auth.signOut();
   };
 
+  const handleSync = async () => {
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("请先登录");
+
+      const response = await fetch("/api/binance/sync", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      alert(`同步成功！共同步 ${data.count} 笔交易记录。`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "同步失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (user) {
     return (
       <DropdownMenu>
@@ -81,6 +103,10 @@ export function AuthComponent() {
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-xs text-muted-foreground">
             {user.email}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleSync} disabled={loading}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            <span>{loading ? "同步中..." : "立即同步交易"}</span>
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
