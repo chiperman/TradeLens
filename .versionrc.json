@@ -1,0 +1,16 @@
+{
+  "types": [
+    { "type": "feat", "section": "✨ 新功能 | New Features" },
+    { "type": "fix", "section": "🐛 Bug 修复 | Bug Fixes" },
+    { "type": "chore", "section": "🚀 琐碎任务 | Chores" },
+    { "type": "docs", "section": "📝 文档 | Documentation" },
+    { "type": "style", "section": "💄 样式 | Styles" },
+    { "type": "refactor", "section": "♻️ 代码重构 | Code Refactoring" },
+    { "type": "perf", "section": "⚡ 性能优化 | Performance Improvements" },
+    { "type": "test", "section": "✅ 测试 | Tests" }
+  ],
+  "commitUrlFormat": "https://github.com/chiperman/TradeLens/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/chiperman/TradeLens/compare/{{previousTag}}...{{currentTag}}",
+  "releaseCommitMessageFormat": "chore(release): 发布版本 {{currentTag}}",
+  "header": "# TradeLens 变更日志\n\n所有重要的更改都将记录在此文件中。"
+}
