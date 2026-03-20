@@ -33,9 +33,9 @@
     - [x] `api_keys`: 交易所 API Key (需要加密存储)
     - [x] `transactions`: 交易明细流水
     - [ ] `assets_summary`: 资产汇总视图
-- [ ] **用户认证系统**
-  - [ ] 实现登录/注册页面
-  - [ ] 集成 Supabase Auth (Email / Google)
+- [x] **用户认证系统**
+  - [x] 实现登录/注册页面
+  - [x] 集成 Supabase Auth (Email / Google)
 - [x] **数据保存功能**
   - [x] 实现“保存此笔计算”到数据库历史账本
 
