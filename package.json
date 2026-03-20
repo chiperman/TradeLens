@@ -2,15 +2,22 @@
   "name": "tradelens-tmp",
   "version": "0.1.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chiperman/TradeLens.git"
+  },
+  "homepage": "https://github.com/chiperman/TradeLens#readme",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prepare": "husky"
+    "prepare": "husky",
+    "release": "standard-version"
   },
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.0.0",
@@ -48,8 +55,14 @@
     "jsdom": "^29.0.0",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
+    "standard-version": "^9.5.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "flatted": ">=3.4.2"
+    }
   }
 }
