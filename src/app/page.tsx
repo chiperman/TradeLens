@@ -15,9 +15,30 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCw, Radio, Save, History, User as UserIcon, Coins, Activity, Trash2, TrendingUp, TrendingDown, ArrowRightLeft } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { 
+  RefreshCw, Radio, Save, History, User as UserIcon, Coins, Activity, 
+  Trash2, TrendingUp, TrendingDown, ArrowRightLeft, Check, ChevronsUpDown, Search 
+} from "lucide-react";
 import { AuthComponent } from "@/components/auth-component";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
+import { cn } from "@/lib/utils";
+
+const popularSymbols = [
+  { value: "BTCUSDT", label: "BTC/USDT" },
+  { value: "ETHUSDT", label: "ETH/USDT" },
+  { value: "SOLUSDT", label: "SOL/USDT" },
+  { value: "BNBUSDT", label: "BNB/USDT" },
+  { value: "DOGEUSDT", label: "DOGE/USDT" },
+  { value: "XRPUSDT", label: "XRP/USDT" },
+  { value: "PEPEUSDT", label: "PEPE/USDT" },
+  { value: "ORDIUSDT", label: "ORDI/USDT" },
+  { value: "TIAUSDT", label: "TIA/USDT" },
+  { value: "SUIUSDT", label: "SUI/USDT" },
+  { value: "OPUSDT", label: "OP/USDT" },
+  { value: "ARBUSDT", label: "ARB/USDT" },
+];
 
 export default function CalculatorPage() {
   const supabase = createClient();
@@ -25,7 +46,8 @@ export default function CalculatorPage() {
 
   // Symbol State
   const [symbol, setSymbol] = useLocalStorage<string>("tradelens_current_symbol", "BTCUSDT");
-  const [symbolInput, setSymbolInput] = useState(symbol);
+  const [symbolInput, setSymbolInput] = useState("");
+  const [open, setOpen] = useState(false);
 
   // Derived Asset Names
   const baseAsset = useMemo(() => {
@@ -149,8 +171,8 @@ export default function CalculatorPage() {
     else alert("已保存至历史账本");
   };
 
-  const handleSymbolChange = () => {
-    const newSymbol = symbolInput.toUpperCase().trim();
+  const handleSymbolChange = (val: string) => {
+    const newSymbol = val.toUpperCase().trim();
     if (newSymbol && newSymbol !== symbol) {
       setSymbol(newSymbol);
     }
@@ -170,14 +192,75 @@ export default function CalculatorPage() {
           
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 px-1 py-1 rounded-full border bg-background shadow-sm pr-3">
-              <Input 
-                value={symbolInput} 
-                onChange={(e) => setSymbolInput(e.target.value)}
-                onBlur={handleSymbolChange}
-                onKeyDown={(e) => e.key === "Enter" && handleSymbolChange()}
-                className="w-24 h-7 text-[10px] font-black uppercase border-none focus-visible:ring-0 bg-transparent text-center"
-                placeholder="BTCUSDT"
-              />
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-[120px] h-7 justify-between text-[10px] font-black uppercase hover:bg-transparent px-3"
+                  >
+                    {symbol || "选择交易对..."}
+                    <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden" align="end">
+                  <Command className="bg-background/95 backdrop-blur-md">
+                    <CommandInput 
+                      placeholder="搜索交易对..." 
+                      className="h-9 text-xs" 
+                      value={symbolInput}
+                      onValueChange={setSymbolInput}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && symbolInput) {
+                          handleSymbolChange(symbolInput);
+                          setOpen(false);
+                          setSymbolInput("");
+                        }
+                      }}
+                    />
+                    <CommandList>
+                      <CommandEmpty className="py-6 text-center">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase mb-2">未找到预设资产</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 text-[9px] font-bold uppercase tracking-widest"
+                          onClick={() => {
+                            handleSymbolChange(symbolInput);
+                            setOpen(false);
+                            setSymbolInput("");
+                          }}
+                        >
+                          强制使用 "{symbolInput.toUpperCase()}"
+                        </Button>
+                      </CommandEmpty>
+                      <CommandGroup heading="热门资产">
+                        {popularSymbols.map((s) => (
+                          <CommandItem
+                            key={s.value}
+                            value={s.value}
+                            onSelect={(currentValue) => {
+                              handleSymbolChange(currentValue);
+                              setOpen(false);
+                              setSymbolInput("");
+                            }}
+                            className="text-[11px] font-bold py-2 px-3"
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-3.5 w-3.5 text-primary",
+                                symbol === s.value ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {s.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <div className={`flex items-center gap-2 pl-2 border-l ${isConnected ? "border-green-500/20" : "border-red-500/20"}`}>
                 <Radio className={`w-3.5 h-3.5 ${isConnected ? "text-green-500 animate-pulse" : "text-red-500"}`} />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
