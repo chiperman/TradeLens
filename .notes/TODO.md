@@ -3,29 +3,32 @@
 ## Phase 0: 项目初始化与基础设施
 
 - [x] 初始化 Next.js 项目 (TypeScript + Tailwind CSS)
-- [ ] 配置环境变量模板 (`.env.example`)
-- [ ] 集成 UI 组件库 (shadcn/ui)
-- [ ] 配置 Git 规范与常用目录结构 (`/components`, `/hooks`, `/lib`, `/services`)
-- [ ] 编写基础布局 (Layout) 与 响应式导航栏
+- [x] 配置环境变量模板 (`.env.example`)
+- [x] 集成 UI 组件库 (shadcn/ui)
+- [x] 配置 Git 规范与常用目录结构 (`/components`, `/hooks`, `/lib`, `/services`)
+- [x] 编写基础布局 (Layout) 与 响应式导航栏
+- [x] 集成自动化 Release 与 Changelog (standard-version)
+- [x] 配置全链路 CI/CD (GitHub Actions + Dependabot)
+- [x] 优化依赖管理 (PR 分组 + 自动合并)
 
 ## Phase 1: 核心计算器功能 (继承并优化 HTML 版)
 
 - [ ] **价格实时同步模块**
-  - [ ] 封装 Binance 价格获取 Hook (优先使用 WebSocket)
+  - [x] 封装 Binance 价格获取 Hook (优先使用 WebSocket)
   - [ ] 封装法币汇率获取 Hook
 - [ ] **场景计算逻辑实现**
-  - [ ] 开发 `Calculator` 核心逻辑：覆盖买/卖双向手续费计算
-  - [ ] 实现 **Scenario A**: 已成交手动录入对比
-  - [ ] 实现 **Scenario B**: 实时价格试算与保本价 (Break-even) 动态计算
+  - [x] 开发 `Calculator` 核心逻辑：覆盖买/卖双向手续费计算
+  - [x] 实现 **Scenario A**: 已成交手动录入对比
+  - [x] 实现 **Scenario B**: 实时价格试算与保本价 (Break-even) 动态计算
 - [ ] **本地存储增强**
-  - [ ] 使用 `LocalStorage` 实现配置与临时计算结果的持久化
+  - [x] 使用 `LocalStorage` 实现配置与临时计算结果的持久化
 
 ## Phase 2: 后端与数据库集成 (Supabase)
 
-- [ ] **Supabase 环境搭建**
-  - [ ] 创建 Supabase 项目并配置数据库连接
-  - [ ] 设计数据库 Schema:
-    - [ ] `calculations`: 计算历史明细
+- [x] Supabase 环境搭建
+  - [x] 创建 Supabase 项目并配置数据库连接
+  - [x] 设计数据库 Schema:
+    - [x] `calculations`: 计算历史明细
     - [ ] `users`: 用户信息
     - [ ] `api_keys`: 交易所 API Key (需要加密存储)
     - [ ] `transactions`: 交易明细流水
@@ -33,8 +36,8 @@
 - [ ] **用户认证系统**
   - [ ] 实现登录/注册页面
   - [ ] 集成 Supabase Auth (Email / Google)
-- [ ] **数据保存功能**
-  - [ ] 实现“保存此笔计算”到数据库历史账本
+- [x] **数据保存功能**
+  - [x] 实现“保存此笔计算”到数据库历史账本
 
 ## Phase 3: 交易所 API 自动化与聚合逻辑 (核心难点)
 

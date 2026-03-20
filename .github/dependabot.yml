@@ -7,7 +7,27 @@ updates:
     open-pull-requests-limit: 10
     reviewers:
       - "chiperman"
+    groups:
+      dev-tooling:
+        dependency-types:
+          - "development"
+      frontend-ui:
+        patterns:
+          - "lucide-react"
+          - "clsx"
+          - "tailwind-*"
+          - "@hugeicons/*"
+      core-framework:
+        patterns:
+          - "next"
+          - "react*"
+          - "@supabase/*"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
+    groups:
+      github-actions-suite:
+        patterns:
+          - "*"
