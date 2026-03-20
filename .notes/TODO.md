@@ -29,9 +29,9 @@
   - [x] 创建 Supabase 项目并配置数据库连接
   - [x] 设计数据库 Schema:
     - [x] `calculations`: 计算历史明细
-    - [ ] `users`: 用户信息
-    - [ ] `api_keys`: 交易所 API Key (需要加密存储)
-    - [ ] `transactions`: 交易明细流水
+    - [x] `users`: 用户信息
+    - [x] `api_keys`: 交易所 API Key (需要加密存储)
+    - [x] `transactions`: 交易明细流水
     - [ ] `assets_summary`: 资产汇总视图
 - [ ] **用户认证系统**
   - [ ] 实现登录/注册页面
