@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { calculateBreakEven, calculateNetProfit } from "@/lib/calculator";
+import { calculateAccumulation, calculateBreakEven, calculateNetProfit } from "@/lib/calculator";
 import { useBinancePrice } from "@/hooks/use-binance-price";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTradeHistory } from "@/hooks/use-trade-history";
@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Radio, Save, History, User as UserIcon, Coins, Activity, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RefreshCw, Radio, Save, History, User as UserIcon, Coins, Activity, Trash2, TrendingUp, TrendingDown, ArrowRightLeft } from "lucide-react";
 import { AuthComponent } from "@/components/auth-component";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 
@@ -29,13 +30,16 @@ export default function CalculatorPage() {
   const { rate: cnyRate, isLoading: isRateLoading } = useExchangeRate();
 
   // LocalStorage Persisted State for Fees
-  const [makerFee, setMakerFee] = useLocalStorage<string>("tradelens_maker_fee", "0.1");
-  const [takerFee, setTakerFee] = useLocalStorage<string>("tradelens_taker_fee", "0.1");
+  const [feeRate, setFeeRate] = useLocalStorage<string>("tradelens_global_fee", "0.1");
 
-  // Normal Input States
-  const [buyPrice, setBuyPrice] = useState<string>("60000");
-  const [quantity, setQuantity] = useState<string>("1");
-  const [sellPrice, setSellPrice] = useState<string>("61000");
+  // Core Input States
+  const [sellPrice, setSellPrice] = useState<string>("70000");
+  const [quantity, setQuantity] = useState<string>("0.1");
+  
+  // Scenario A (Manual/Locked)
+  const [buyPriceA, setBuyPriceA] = useState<string>("69000");
+  const [useManualUsdtA, setUseManualUsdtA] = useState<boolean>(false);
+  const [manualUsdtA, setManualUsdtA] = useState<string>("7000");
 
   // Trade History Hook
   const { history, saveCalculation, deleteCalculation, exportToExcel, exportToJSON } = useTradeHistory();
@@ -47,52 +51,76 @@ export default function CalculatorPage() {
     supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
   }, [supabase]);
 
-  const syncLivePrice = () => {
-    if (livePrice) setBuyPrice(livePrice.toString());
-  };
-
-  const breakEvenResult = useMemo(() => {
-    const bPrice = parseFloat(buyPrice);
-    const qty = parseFloat(quantity);
-    const mFee = parseFloat(makerFee) / 100;
-    const tFee = parseFloat(takerFee) / 100;
-
-    if (isNaN(bPrice) || isNaN(qty) || isNaN(mFee) || isNaN(tFee)) return 0;
-    return calculateBreakEven({
-      buyPrice: bPrice,
-      quantity: qty,
-      makerFeeRate: mFee,
-      takerFeeRate: tFee,
-    });
-  }, [buyPrice, quantity, makerFee, takerFee]);
-
-  const profitResult = useMemo(() => {
-    const bPrice = parseFloat(buyPrice);
+  // --- Calculations ---
+  
+  // Shared Sell Logic
+  const sellStats = useMemo(() => {
     const sPrice = parseFloat(sellPrice);
     const qty = parseFloat(quantity);
-    const mFee = parseFloat(makerFee) / 100;
-    const tFee = parseFloat(takerFee) / 100;
+    const fRate = (parseFloat(feeRate) || 0) / 100;
 
-    if (isNaN(bPrice) || isNaN(sPrice) || isNaN(qty) || isNaN(mFee) || isNaN(tFee))
-      return { profit: 0, fees: 0 };
-    return calculateNetProfit(bPrice, sPrice, qty, tFee, mFee);
-  }, [buyPrice, sellPrice, quantity, makerFee, takerFee]);
+    if (isNaN(sPrice) || isNaN(qty)) {
+      return { gross: 0, fee: 0, net: 0 };
+    }
 
-  const handleSave = async (type: "break_even" | "profit") => {
+    const gross = sPrice * qty;
+    const fee = gross * fRate;
+    const net = gross - fee;
+
+    return { gross, fee, net };
+  }, [sellPrice, quantity, feeRate]);
+
+  // Scenario A Result
+  const scenarioAResult = useMemo(() => {
+    const bPrice = parseFloat(buyPriceA);
+    const fRate = (parseFloat(feeRate) || 0) / 100;
+    if (isNaN(bPrice)) return null;
+
+    return calculateAccumulation({
+      buyPrice: bPrice,
+      sellPrice: parseFloat(sellPrice),
+      quantity: parseFloat(quantity),
+      buyFeeRate: fRate,
+      sellFeeRate: fRate,
+    });
+  }, [buyPriceA, sellPrice, quantity, feeRate]);
+
+  // Scenario B Result (Live)
+  const scenarioBResult = useMemo(() => {
+    if (!livePrice) return null;
+    const fRate = (parseFloat(feeRate) || 0) / 100;
+
+    return calculateAccumulation({
+      buyPrice: livePrice,
+      sellPrice: parseFloat(sellPrice),
+      quantity: parseFloat(quantity),
+      buyFeeRate: fRate,
+      sellFeeRate: fRate,
+    });
+  }, [livePrice, sellPrice, quantity, feeRate]);
+
+  // Break-even for Scenario B
+  const breakEvenB = useMemo(() => {
+    const fRate = (parseFloat(feeRate) || 0) / 100;
+    const qty = parseFloat(quantity);
+    const netSell = sellStats.net;
+    if (isNaN(qty) || isNaN(netSell)) return 0;
+    
+    return (netSell * (1 - fRate)) / qty;
+  }, [sellStats.net, quantity, feeRate]);
+
+  const handleSave = async (type: "break_even" | "profit", customData?: any) => {
     if (!user) {
       alert("请先登录以保存记录");
       return;
     }
 
     const res = await saveCalculation({
-      buy_price: parseFloat(buyPrice),
-      sell_price: type === "profit" ? parseFloat(sellPrice) : undefined,
+      buy_price: customData?.buyPrice ?? 0,
+      sell_price: parseFloat(sellPrice),
       quantity: parseFloat(quantity),
-      profit: type === "profit" ? profitResult.profit : undefined,
-      fees:
-        type === "profit"
-          ? profitResult.fees
-          : parseFloat(buyPrice) * parseFloat(quantity) * (parseFloat(takerFee) / 100),
+      profit: customData?.profit ?? 0,
+      fees: customData?.fees ?? 0,
       type,
     });
 
@@ -101,315 +129,340 @@ export default function CalculatorPage() {
   };
 
   return (
-    <main className="container mx-auto py-10 px-4 max-w-2xl">
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
+    <main className="container mx-auto py-10 px-4 max-w-6xl">
+      <div className="space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-4xl font-bold tracking-tight">TradeLens</h1>
-              <div
-                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                  isConnected
-                    ? "bg-green-500/10 text-green-600 border-green-500/20"
-                    : "bg-red-500/10 text-red-600 border-red-500/20"
-                }`}
-              >
-                <Radio className={`w-3 h-3 ${isConnected ? "animate-pulse" : ""}`} />
-                {isConnected ? "Binance Live" : "Offline"}
-              </div>
-              {cnyRate && (
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                  <Coins className="w-3 h-3" />
-                  USD/CNY: {cnyRate.toFixed(2)}
-                </div>
-              )}
-            </div>
-            <p className="text-muted-foreground text-sm">精准测算波段交易的真实盈亏与保本价</p>
+            <h1 className="text-4xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
+              TradeLens
+            </h1>
+            <p className="text-muted-foreground text-sm font-medium">专业波段双场景回购对比计算器</p>
           </div>
-          <div className="flex items-center gap-2">
+          
+          <div className="flex flex-wrap items-center gap-3">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border bg-background shadow-sm ${isConnected ? "border-green-500/20" : "border-red-500/20"}`}>
+              <Radio className={`w-3.5 h-3.5 ${isConnected ? "text-green-500 animate-pulse" : "text-red-500"}`} />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                BTC: ${livePrice?.toLocaleString() || "---"}
+              </span>
+            </div>
+            {cnyRate && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-background shadow-sm">
+                <Coins className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  USD/CNY: {cnyRate.toFixed(4)}
+                </span>
+              </div>
+            )}
             <AuthComponent />
           </div>
         </div>
 
-        {/* 基础参数卡片 */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-lg">交易参数配置</CardTitle>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={syncLivePrice}
-                disabled={!isConnected}
-                className="gap-2 text-xs"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                同步市价: {livePrice?.toFixed(1) || "---"}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="buyPrice" className="text-xs">
-                买入价 (USDT)
-              </Label>
-              <Input
-                id="buyPrice"
-                type="number"
-                value={buyPrice}
-                onChange={(e) => setBuyPrice(e.target.value)}
-                className="h-9"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="quantity" className="text-xs">
-                数量
-              </Label>
-              <Input
-                id="quantity"
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="h-9"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="takerFee" className="text-xs">
-                买入费率 (%)
-              </Label>
-              <Input
-                id="takerFee"
-                type="number"
-                step="0.01"
-                value={takerFee}
-                onChange={(e) => setTakerFee(e.target.value)}
-                className="h-9"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="makerFee" className="text-xs">
-                卖出费率 (%)
-              </Label>
-              <Input
-                id="makerFee"
-                type="number"
-                step="0.01"
-                value={makerFee}
-                onChange={(e) => setMakerFee(e.target.value)}
-                className="h-9"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 计算器 & 分析 Tabs */}
-        <Tabs defaultValue="break-even" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="break-even">保本预测</TabsTrigger>
-            <TabsTrigger value="profit">盈亏复盘</TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2">
-              <Activity className="w-3.5 h-3.5" />
-              智能分析
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="analytics">
-            <AnalyticsDashboard />
-          </TabsContent>
-
-          <TabsContent value="break-even">
-            <Card className="border-primary/20 bg-primary/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-md flex items-center gap-2">实时保本点</CardTitle>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Panel: Parameters */}
+          <div className="lg:col-span-4 space-y-6">
+            <Card className="shadow-lg border-primary/5">
+              <CardHeader className="pb-4 text-primary">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                    <TrendingDown className="w-4 h-4 text-red-500" />
+                    卖出参数 (本金)
+                  </CardTitle>
+                  <span className="text-[10px] font-bold py-0.5 px-2 bg-primary/10 text-primary rounded-md">SELL INFO</span>
+                </div>
               </CardHeader>
-              <CardContent className="py-6">
-                <div className="text-center">
-                  <p className="text-5xl font-mono font-black tracking-tight text-primary">
-                    {breakEvenResult.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 4,
-                    })}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-3 uppercase tracking-widest font-bold">
-                    Target Break-even Price
-                  </p>
+              <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">卖出价格 (USDT)</Label>
+                  <Input type="number" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} className="font-mono h-9" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">卖出数量 (BTC)</Label>
+                  <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="font-mono h-9" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">手续费率 (%)</Label>
+                    <Input type="number" value={feeRate} onChange={(e) => setFeeRate(e.target.value)} className="font-mono text-center h-9" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">实收 USDT (含费)</Label>
+                    <div className="h-9 flex items-center px-3 border rounded-md bg-muted/30 font-mono text-xs font-bold text-muted-foreground">
+                      {sellStats.net.toFixed(2)}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
-              <CardFooter className="pt-0 justify-center">
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={() => handleSave("break_even")}
-                  className="text-primary/60 hover:text-primary gap-1"
-                >
-                  <Save className="w-3.5 h-3.5" /> 保存此保本目标
-                </Button>
-              </CardFooter>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="profit">
-            <Card className="border-green-500/20 bg-green-500/5">
-              <CardContent className="pt-6 space-y-4">
+            <Card className="shadow-lg border-green-500/10">
+              <CardHeader className="pb-4 border-l-4 border-green-500 rounded-t-sm">
+                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                  <Save className="w-4 h-4 text-green-500" />
+                  成交记录 (Scenario A)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="sellPrice" className="text-xs">
-                    拟卖出价 (USDT)
-                  </Label>
-                  <Input
-                    id="sellPrice"
-                    type="number"
-                    value={sellPrice}
-                    onChange={(e) => setSellPrice(e.target.value)}
-                    className="h-9 border-green-500/20"
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">买入价格 (已成交)</Label>
+                  <Input type="number" value={buyPriceA} onChange={(e) => setBuyPriceA(e.target.value)} className="font-mono border-green-500/20 h-9" />
+                </div>
+                <div className="flex items-center space-x-2 pt-1">
+                  <Checkbox 
+                    id="useManual" 
+                    checked={useManualUsdtA} 
+                    onCheckedChange={(checked) => setUseManualUsdtA(checked as boolean)} 
+                  />
+                  <Label htmlFor="useManual" className="text-xs font-bold text-muted-foreground cursor-pointer">使用手动买入额</Label>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">买入总花费 (USDT)</Label>
+                  <Input 
+                    type="number" 
+                    value={useManualUsdtA ? manualUsdtA : sellStats.net.toFixed(2)} 
+                    onChange={(e) => setManualUsdtA(e.target.value)} 
+                    disabled={!useManualUsdtA}
+                    className={`font-mono h-9 ${!useManualUsdtA ? "bg-muted/50" : "border-green-500/20"}`}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-background/50 p-4 rounded-xl text-center border border-green-500/10">
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase">
-                      净利润 (Net P&L)
-                    </p>
-                    <p
-                      className={`text-2xl font-black mt-1 ${profitResult.profit >= 0 ? "text-green-600" : "text-red-600"}`}
-                    >
-                      {profitResult.profit >= 0 ? "+" : ""}
-                      {profitResult.profit.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="bg-background/50 p-4 rounded-xl text-center border border-muted">
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase">
-                      手续费损耗
-                    </p>
-                    <p className="text-2xl font-bold mt-1 text-muted-foreground">
-                      {profitResult.fees.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => handleSave("profit")}
-                  className="w-full bg-green-600 hover:bg-green-700 gap-2"
-                >
-                  <Save className="w-4 h-4" /> 记录此笔成交
-                </Button>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
 
-        {/* 资产持仓概览 */}
-        {user && (
-          <Card className="border-none shadow-none bg-transparent">
-            <CardHeader className="px-0 pb-3">
-              <div className="flex items-center gap-2">
-                <Coins className="w-4 h-4 text-blue-500" />
-                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-                  资产组合概览
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="px-0 grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {isAssetsLoading ? (
-                <div className="col-span-full py-4 text-center text-xs text-muted-foreground">加载持仓中...</div>
-              ) : assets.length > 0 ? (
-                assets.map((asset) => (
-                  <div key={asset.base_asset} className="bg-muted/30 p-3 rounded-xl border border-muted-foreground/5">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{asset.base_asset}</p>
-                    <p className="text-lg font-mono font-black mt-0.5">
-                      {asset.total_quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Avg: ${asset.average_price.toFixed(2)}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-full py-4 text-center text-xs text-muted-foreground border-2 border-dashed rounded-xl">
-                  暂无持仓数据，请同步 Binance 交易
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 历史账本简报 */}
-        <Card className="border-none shadow-none bg-transparent">
-          <CardHeader className="px-0 pb-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <History className="w-4 h-4 text-muted-foreground" />
-                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-                  最近计算历史
-                </CardTitle>
-              </div>
-              {user && history.length > 0 && (
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={exportToExcel} className="h-7 text-[10px] font-bold uppercase gap-1">
-                    Excel
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={exportToJSON} className="h-7 text-[10px] font-bold uppercase gap-1">
-                    JSON
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="px-0 space-y-2">
-            {history.length > 0 ? (
-              history.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-between items-center p-3 rounded-lg bg-muted/40 text-sm border border-transparent hover:border-muted-foreground/10 transition-colors"
-                >
-                  <div className="flex flex-col">
-                    <span className="font-mono font-bold">
-                      {item.buy_price} → {item.sell_price || "---"}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {new Date(item.created_at!).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <p
-                        className={`font-bold ${item.profit && item.profit > 0 ? "text-green-600" : "text-muted-foreground"}`}
-                      >
-                        {item.profit
-                          ? `${item.profit.toFixed(2)} USDT`
-                          : item.type === "break_even"
-                            ? "保本记录"
-                            : "---"}
-                      </p>
+          {/* Right Panel: Scenarios Comparison */}
+          <div className="lg:col-span-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+              {/* Scenario A Card */}
+              <Card className="shadow-xl bg-card border-t-4 border-green-500 h-full flex flex-col">
+                <CardHeader className="pb-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2">
+                        Scenario A
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-100 text-green-600 rounded">成交统计</span>
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground font-bold">HISTORICAL PERFORMANCE</p>
                     </div>
-                    {user && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
-                        onClick={async () => {
-                          if (confirm("确定要删除这条记录吗？")) {
-                            const res = await deleteCalculation(item.id!);
-                            if (res.error) alert(res.error);
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <ArrowRightLeft className="w-4 h-4 text-muted-foreground/30" />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6 flex-1">
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter text-slate-400">最终获得币量</p>
+                    <div className="text-3xl font-mono font-black text-foreground">
+                      {scenarioAResult?.netBtcReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-40">BTC</span>
+                    </div>
+                    <p className={`text-[11px] font-bold flex items-center gap-1 ${ (scenarioAResult?.btcGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      {(scenarioAResult?.btcGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      {(scenarioAResult?.btcGain ?? 0) >= 0 ? "+" : ""}
+                      {scenarioAResult?.btcGain.toFixed(8)} BTC
+                    </p>
+                  </div>
+
+                  <div className="py-4 border-y border-dashed border-slate-100">
+                    <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase mb-2">
+                      <span>手续费明细</span>
+                      <span className="text-primary tracking-tighter">Total Fee ≈ ¥{( (scenarioAResult?.totalFeesUsdt || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                      <div className="bg-muted/30 p-2 rounded-md">
+                        <Label className="text-[8px] uppercase block mb-1 opacity-60">SELL (USDT)</Label>
+                        {scenarioAResult?.sellFeeUsdt.toFixed(2)}
+                      </div>
+                      <div className="bg-muted/30 p-2 rounded-md">
+                        <Label className="text-[8px] uppercase block mb-1 opacity-60">BUY (BTC)</Label>
+                        {scenarioAResult?.buyFeeBtc.toFixed(6)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter text-slate-400">回购收益估算 (折合)</p>
+                    <div className={`text-4xl font-mono font-black ${ (scenarioAResult?.btcGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      $ {Math.abs( (scenarioAResult?.btcGain ?? 0) * parseFloat(buyPriceA) ).toFixed(2)}
+                    </div>
+                    <p className="text-sm font-bold text-muted-foreground opacity-60">
+                      ≈ ¥ { ( (scenarioAResult?.btcGain ?? 0) * parseFloat(buyPriceA) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-2">
+                  <Button variant="outline" size="sm" className="w-full text-[10px] font-black uppercase tracking-widest gap-2 bg-green-50/50" onClick={() => handleSave("profit", { profit: (scenarioAResult?.btcGain ?? 0) * parseFloat(buyPriceA), fees: scenarioAResult?.totalFeesUsdt, buyPrice: parseFloat(buyPriceA) })}>
+                    <Save className="w-3 h-3" /> 保存此成交记录
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Scenario B Card */}
+              <Card className="shadow-2xl bg-neutral-950 text-white border-t-4 border-blue-500 h-full flex flex-col">
+                <CardHeader className="pb-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2 text-blue-400">
+                        Scenario B
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded">实时买入</span>
+                      </h3>
+                      <p className="text-[10px] text-neutral-500 font-bold">REAL-TIME PREDICTION</p>
+                    </div>
+                    <Radio className={`w-4 h-4 ${isConnected ? "text-blue-500 animate-pulse" : "text-neutral-700"}`} />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6 flex-1">
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-tighter text-neutral-400">预测获得币量</p>
+                    <div className="text-3xl font-mono font-black text-blue-400">
+                      {scenarioBResult?.netBtcReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-40 text-blue-400/50">BTC</span>
+                    </div>
+                    <p className={`text-[11px] font-bold flex items-center gap-1 ${ (scenarioBResult?.btcGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      {(scenarioBResult?.btcGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      {(scenarioBResult?.btcGain ?? 0) >= 0 ? "+" : ""}
+                      {scenarioBResult?.btcGain.toFixed(8)} BTC
+                    </p>
+                  </div>
+
+                  <div className="py-4 border-y border-neutral-800">
+                    <div className="flex justify-between text-[10px] font-bold text-neutral-500 uppercase mb-2">
+                      <span>预估手续费</span>
+                      <span className="text-orange-400 tracking-tighter text-[9px]">Total ≈ ¥{( (scenarioBResult?.totalFeesUsdt || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                      <div className="bg-neutral-900 p-2 rounded-md border border-neutral-800">
+                        <Label className="text-[8px] text-neutral-600 block mb-1 uppercase">SELL (USDT)</Label>
+                        {scenarioBResult?.sellFeeUsdt.toFixed(2)}
+                      </div>
+                      <div className="bg-neutral-900 p-2 rounded-md border border-neutral-800">
+                        <Label className="text-[8px] text-neutral-600 block mb-1 uppercase">BUY (BTC)</Label>
+                        {scenarioBResult?.buyFeeBtc.toFixed(6)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-tighter text-neutral-400">即时盈亏估算</p>
+                    <div className={`text-4xl font-mono font-black ${ (scenarioBResult?.btcGain ?? 0) >= 0 ? "text-blue-400" : "text-red-500"}`}>
+                      $ {Math.abs( (scenarioBResult?.btcGain ?? 0) * (livePrice || 0) ).toFixed(2)}
+                    </div>
+                    <p className="text-sm font-bold text-neutral-600">
+                      ≈ ¥ { ( (scenarioBResult?.btcGain ?? 0) * (livePrice || 0) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-2 border-t border-neutral-800">
+                  <div className="w-full flex justify-between items-center text-[10px] font-bold">
+                    <span className="text-neutral-500 uppercase">保本回购价:</span>
+                    <span className="text-red-400 font-black font-mono tracking-tighter text-xs">
+                      ${breakEvenB.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* Secondary Section: History & Assets */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6">
+          <Tabs defaultValue="history" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-6 bg-muted/50 p-1 rounded-xl">
+              <TabsTrigger value="history" className="text-xs font-bold uppercase tracking-widest rounded-lg">历史账本</TabsTrigger>
+              <TabsTrigger value="assets" className="text-xs font-bold uppercase tracking-widest rounded-lg">持仓概览</TabsTrigger>
+              <TabsTrigger value="analytics" className="text-xs font-bold uppercase tracking-widest gap-2 rounded-lg">
+                <Activity className="w-3.5 h-3.5" />
+                智能分析
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="analytics" className="mt-0">
+              <AnalyticsDashboard />
+            </TabsContent>
+
+            <TabsContent value="history" className="mt-0">
+              <Card className="border-none shadow-none bg-transparent">
+                <CardHeader className="px-0 pt-0 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <History className="w-4 h-4 text-primary" />
+                      <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Recent Calculations</CardTitle>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={exportToExcel} className="h-6 px-2 text-[9px] font-bold uppercase">Excel</Button>
+                      <Button variant="ghost" size="sm" onClick={exportToJSON} className="h-6 px-2 text-[9px] font-bold uppercase">JSON</Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-0 space-y-3">
+                  {history.length > 0 ? (
+                    history.map((item, idx) => (
+                      <div key={idx} className="group relative flex justify-between items-center p-3 rounded-xl bg-muted/30 border border-transparent hover:border-primary/20 hover:bg-background transition-all shadow-sm">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-mono text-sm font-black tracking-tighter">
+                            {(item.buy_price || 0).toLocaleString()} <span className="text-muted-foreground/30 mx-1">→</span> {(item.sell_price || 0).toLocaleString()}
+                          </span>
+                          <span className="text-[9px] font-bold text-muted-foreground uppercase opacity-50">
+                            {new Date(item.created_at!).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className={`font-mono text-sm font-black ${ (item.profit || 0) >= 0 ? "text-green-500" : "text-muted-foreground"}`}>
+                              {(item.profit || 0).toFixed(2)} <span className="text-[10px] opacity-40">USDT</span>
+                            </p>
+                          </div>
+                          {user && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500"
+                              onClick={() => { if(confirm("确定删除？")) deleteCalculation(item.id!) }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 border-2 border-dashed rounded-3xl text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">
+                      No Records Found
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="assets" className="mt-0">
+               <Card className="border-none shadow-none bg-transparent">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {isAssetsLoading ? (
+                      <div className="col-span-full py-12 text-center text-xs text-muted-foreground font-black uppercase">Loading Portfolio...</div>
+                    ) : assets.length > 0 ? (
+                      assets.map((asset) => (
+                        <div key={asset.base_asset} className="bg-background border border-muted p-4 rounded-2xl shadow-sm hover:border-primary/20 transition-colors">
+                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">{asset.base_asset}</p>
+                          <p className="text-xl font-mono font-black mt-1 leading-none">
+                            {asset.total_quantity.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                          </p>
+                          <div className="flex justify-between items-center mt-3 pt-3 border-t border-muted/50">
+                            <span className="text-[9px] font-bold text-muted-foreground uppercase">Avg Price</span>
+                            <span className="text-[10px] font-mono font-bold">${asset.average_price.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full py-12 text-center text-xs text-muted-foreground border-2 border-dashed rounded-3xl font-black uppercase tracking-widest">
+                        Portfolio Empty
+                      </div>
                     )}
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-10 border-2 border-dashed rounded-2xl text-muted-foreground text-xs">
-                {user ? "暂无历史记录" : "登录后可同步云端账本"}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+               </Card>
+            </TabsContent>
+          </Tabs>
 
-        <footer className="text-center py-6 text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
-          Powered by TradeLens Core v0.2
-        </footer>
+          <footer className="lg:col-span-2 text-center py-12 text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em] opacity-40 border-t border-muted mt-8">
+            TradeLens Dashboard v0.2 Professional - Powered by Antigravity
+          </footer>
+        </div>
       </div>
     </main>
   );
