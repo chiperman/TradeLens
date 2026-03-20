@@ -23,8 +23,29 @@ export default function CalculatorPage() {
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
 
+  // Symbol State
+  const [symbol, setSymbol] = useLocalStorage<string>("tradelens_current_symbol", "BTCUSDT");
+  const [symbolInput, setSymbolInput] = useState(symbol);
+
+  // Derived Asset Names
+  const baseAsset = useMemo(() => {
+    if (symbol.endsWith("USDT")) return symbol.replace("USDT", "");
+    if (symbol.endsWith("USDC")) return symbol.replace("USDC", "");
+    if (symbol.endsWith("BNB")) return symbol.replace("BNB", "");
+    if (symbol.endsWith("BTC")) return symbol.replace("BTC", "");
+    return symbol.substring(0, symbol.length - 4); // Default fallback
+  }, [symbol]);
+
+  const quoteAsset = useMemo(() => {
+    if (symbol.endsWith("USDT")) return "USDT";
+    if (symbol.endsWith("USDC")) return "USDC";
+    if (symbol.endsWith("BNB")) return "BNB";
+    if (symbol.endsWith("BTC")) return "BTC";
+    return symbol.substring(symbol.length - 4);
+  }, [symbol]);
+
   // Binance Real-time Price Hook
-  const { price: livePrice, isConnected } = useBinancePrice("BTCUSDT");
+  const { price: livePrice, isConnected } = useBinancePrice(symbol);
 
   // Exchange Rate Hook
   const { rate: cnyRate, isLoading: isRateLoading } = useExchangeRate();
@@ -128,6 +149,13 @@ export default function CalculatorPage() {
     else alert("已保存至历史账本");
   };
 
+  const handleSymbolChange = () => {
+    const newSymbol = symbolInput.toUpperCase().trim();
+    if (newSymbol && newSymbol !== symbol) {
+      setSymbol(newSymbol);
+    }
+  };
+
   return (
     <main className="container mx-auto py-10 px-4 max-w-6xl">
       <div className="space-y-8">
@@ -141,11 +169,21 @@ export default function CalculatorPage() {
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border bg-background shadow-sm ${isConnected ? "border-green-500/20" : "border-red-500/20"}`}>
-              <Radio className={`w-3.5 h-3.5 ${isConnected ? "text-green-500 animate-pulse" : "text-red-500"}`} />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                BTC: ${livePrice?.toLocaleString() || "---"}
-              </span>
+            <div className="flex items-center gap-2 px-1 py-1 rounded-full border bg-background shadow-sm pr-3">
+              <Input 
+                value={symbolInput} 
+                onChange={(e) => setSymbolInput(e.target.value)}
+                onBlur={handleSymbolChange}
+                onKeyDown={(e) => e.key === "Enter" && handleSymbolChange()}
+                className="w-24 h-7 text-[10px] font-black uppercase border-none focus-visible:ring-0 bg-transparent text-center"
+                placeholder="BTCUSDT"
+              />
+              <div className={`flex items-center gap-2 pl-2 border-l ${isConnected ? "border-green-500/20" : "border-red-500/20"}`}>
+                <Radio className={`w-3.5 h-3.5 ${isConnected ? "text-green-500 animate-pulse" : "text-red-500"}`} />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                  ${livePrice?.toLocaleString() || "---"}
+                </span>
+              </div>
             </div>
             {cnyRate && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-background shadow-sm">
@@ -174,11 +212,11 @@ export default function CalculatorPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">卖出价格 (USDT)</Label>
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">卖出价格 ({quoteAsset})</Label>
                   <Input type="number" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} className="font-mono h-9" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">卖出数量 (BTC)</Label>
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">卖出数量 ({baseAsset})</Label>
                   <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="font-mono h-9" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -187,7 +225,7 @@ export default function CalculatorPage() {
                     <Input type="number" value={feeRate} onChange={(e) => setFeeRate(e.target.value)} className="font-mono text-center h-9" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">实收 USDT (含费)</Label>
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">实收 {quoteAsset} (含费)</Label>
                     <div className="h-9 flex items-center px-3 border rounded-md bg-muted/30 font-mono text-xs font-bold text-muted-foreground">
                       {sellStats.net.toFixed(2)}
                     </div>
@@ -217,7 +255,7 @@ export default function CalculatorPage() {
                   <Label htmlFor="useManual" className="text-xs font-bold text-muted-foreground cursor-pointer">使用手动买入额</Label>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">买入总花费 (USDT)</Label>
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">买入总花费 ({quoteAsset})</Label>
                   <Input 
                     type="number" 
                     value={useManualUsdtA ? manualUsdtA : sellStats.net.toFixed(2)} 
@@ -251,44 +289,44 @@ export default function CalculatorPage() {
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter text-slate-400">最终获得币量</p>
                     <div className="text-3xl font-mono font-black text-foreground">
-                      {scenarioAResult?.netBtcReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-40">BTC</span>
+                      {scenarioAResult?.netBaseReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-40">{baseAsset}</span>
                     </div>
-                    <p className={`text-[11px] font-bold flex items-center gap-1 ${ (scenarioAResult?.btcGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      {(scenarioAResult?.btcGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {(scenarioAResult?.btcGain ?? 0) >= 0 ? "+" : ""}
-                      {scenarioAResult?.btcGain.toFixed(8)} BTC
+                    <p className={`text-[11px] font-bold flex items-center gap-1 ${ (scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      {(scenarioAResult?.baseGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      {(scenarioAResult?.baseGain ?? 0) >= 0 ? "+" : ""}
+                      {scenarioAResult?.baseGain.toFixed(8)} {baseAsset}
                     </p>
                   </div>
 
                   <div className="py-4 border-y border-dashed border-slate-100">
                     <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase mb-2">
                       <span>手续费明细</span>
-                      <span className="text-primary tracking-tighter">Total Fee ≈ ¥{( (scenarioAResult?.totalFeesUsdt || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
+                      <span className="text-primary tracking-tighter">Total Fee ≈ ¥{( (scenarioAResult?.totalFeesQuote || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                       <div className="bg-muted/30 p-2 rounded-md">
-                        <Label className="text-[8px] uppercase block mb-1 opacity-60">SELL (USDT)</Label>
-                        {scenarioAResult?.sellFeeUsdt.toFixed(2)}
+                        <Label className="text-[8px] uppercase block mb-1 opacity-60">SELL ({quoteAsset})</Label>
+                        {scenarioAResult?.sellFeeQuote.toFixed(2)}
                       </div>
                       <div className="bg-muted/30 p-2 rounded-md">
-                        <Label className="text-[8px] uppercase block mb-1 opacity-60">BUY (BTC)</Label>
-                        {scenarioAResult?.buyFeeBtc.toFixed(6)}
+                        <Label className="text-[8px] uppercase block mb-1 opacity-60">BUY ({baseAsset})</Label>
+                        {scenarioAResult?.buyFeeBase.toFixed(6)}
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter text-slate-400">回购收益估算 (折合)</p>
-                    <div className={`text-4xl font-mono font-black ${ (scenarioAResult?.btcGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      $ {Math.abs( (scenarioAResult?.btcGain ?? 0) * parseFloat(buyPriceA) ).toFixed(2)}
+                    <div className={`text-4xl font-mono font-black ${ (scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      $ {Math.abs( (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA) ).toFixed(2)}
                     </div>
                     <p className="text-sm font-bold text-muted-foreground opacity-60">
-                      ≈ ¥ { ( (scenarioAResult?.btcGain ?? 0) * parseFloat(buyPriceA) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
+                      ≈ ¥ { ( (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
                     </p>
                   </div>
                 </CardContent>
                 <CardFooter className="pt-2">
-                  <Button variant="outline" size="sm" className="w-full text-[10px] font-black uppercase tracking-widest gap-2 bg-green-50/50" onClick={() => handleSave("profit", { profit: (scenarioAResult?.btcGain ?? 0) * parseFloat(buyPriceA), fees: scenarioAResult?.totalFeesUsdt, buyPrice: parseFloat(buyPriceA) })}>
+                  <Button variant="outline" size="sm" className="w-full text-[10px] font-black uppercase tracking-widest gap-2 bg-green-50/50" onClick={() => handleSave("profit", { profit: (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA), fees: scenarioAResult?.totalFeesQuote, buyPrice: parseFloat(buyPriceA) })}>
                     <Save className="w-3 h-3" /> 保存此成交记录
                   </Button>
                 </CardFooter>
@@ -312,39 +350,39 @@ export default function CalculatorPage() {
                   <div className="space-y-1">
                     <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-tighter text-neutral-400">预测获得币量</p>
                     <div className="text-3xl font-mono font-black text-blue-400">
-                      {scenarioBResult?.netBtcReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-40 text-blue-400/50">BTC</span>
+                      {scenarioBResult?.netBaseReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-40 text-blue-400/50">{baseAsset}</span>
                     </div>
-                    <p className={`text-[11px] font-bold flex items-center gap-1 ${ (scenarioBResult?.btcGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      {(scenarioBResult?.btcGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {(scenarioBResult?.btcGain ?? 0) >= 0 ? "+" : ""}
-                      {scenarioBResult?.btcGain.toFixed(8)} BTC
+                    <p className={`text-[11px] font-bold flex items-center gap-1 ${ (scenarioBResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      {(scenarioBResult?.baseGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      {(scenarioBResult?.baseGain ?? 0) >= 0 ? "+" : ""}
+                      {scenarioBResult?.baseGain.toFixed(8)} {baseAsset}
                     </p>
                   </div>
 
                   <div className="py-4 border-y border-neutral-800">
                     <div className="flex justify-between text-[10px] font-bold text-neutral-500 uppercase mb-2">
                       <span>预估手续费</span>
-                      <span className="text-orange-400 tracking-tighter text-[9px]">Total ≈ ¥{( (scenarioBResult?.totalFeesUsdt || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
+                      <span className="text-orange-400 tracking-tighter text-[9px]">Total ≈ ¥{( (scenarioBResult?.totalFeesQuote || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                       <div className="bg-neutral-900 p-2 rounded-md border border-neutral-800">
-                        <Label className="text-[8px] text-neutral-600 block mb-1 uppercase">SELL (USDT)</Label>
-                        {scenarioBResult?.sellFeeUsdt.toFixed(2)}
+                        <Label className="text-[8px] text-neutral-600 block mb-1 uppercase">SELL ({quoteAsset})</Label>
+                        {scenarioBResult?.sellFeeQuote.toFixed(2)}
                       </div>
                       <div className="bg-neutral-900 p-2 rounded-md border border-neutral-800">
-                        <Label className="text-[8px] text-neutral-600 block mb-1 uppercase">BUY (BTC)</Label>
-                        {scenarioBResult?.buyFeeBtc.toFixed(6)}
+                        <Label className="text-[8px] text-neutral-600 block mb-1 uppercase">BUY ({baseAsset})</Label>
+                        {scenarioBResult?.buyFeeBase.toFixed(6)}
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-1">
                     <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-tighter text-neutral-400">即时盈亏估算</p>
-                    <div className={`text-4xl font-mono font-black ${ (scenarioBResult?.btcGain ?? 0) >= 0 ? "text-blue-400" : "text-red-500"}`}>
-                      $ {Math.abs( (scenarioBResult?.btcGain ?? 0) * (livePrice || 0) ).toFixed(2)}
+                    <div className={`text-4xl font-mono font-black ${ (scenarioBResult?.baseGain ?? 0) >= 0 ? "text-blue-400" : "text-red-500"}`}>
+                      $ {Math.abs( (scenarioBResult?.baseGain ?? 0) * (livePrice || 0) ).toFixed(2)}
                     </div>
                     <p className="text-sm font-bold text-neutral-600">
-                      ≈ ¥ { ( (scenarioBResult?.btcGain ?? 0) * (livePrice || 0) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
+                      ≈ ¥ { ( (scenarioBResult?.baseGain ?? 0) * (livePrice || 0) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
                     </p>
                   </div>
                 </CardContent>

@@ -18,27 +18,27 @@ interface TradeParams {
 export function calculateAccumulation(params: TradeParams) {
   const { buyPrice, sellPrice, quantity, buyFeeRate, sellFeeRate } = params;
 
-  // 1. 卖出阶段 (手续费扣除 USDT)
+  // 1. 卖出阶段 (手续费扣除 Quote)
   const sellGross = sellPrice * quantity;
-  const sellFeeUsdt = sellGross * sellFeeRate;
-  const netSellUsdt = sellGross - sellFeeUsdt;
+  const sellFeeQuote = sellGross * sellFeeRate;
+  const netSellQuote = sellGross - sellFeeQuote;
 
-  // 2. 买入阶段 (手续费扣除 BTC)
-  const buyGrossBtc = netSellUsdt / buyPrice;
-  const buyFeeBtc = buyGrossBtc * buyFeeRate;
-  const netBtcReceived = buyGrossBtc - buyFeeBtc;
+  // 2. 买入阶段 (手续费扣除 Base)
+  const buyGrossBase = netSellQuote / buyPrice;
+  const buyFeeBase = buyGrossBase * buyFeeRate;
+  const netBaseReceived = buyGrossBase - buyFeeBase;
 
   // 3. 结果汇总
-  const btcGain = netBtcReceived - quantity;
-  const totalFeesUsdt = sellFeeUsdt + (buyFeeBtc * buyPrice);
+  const baseGain = netBaseReceived - quantity;
+  const totalFeesQuote = sellFeeQuote + (buyFeeBase * buyPrice);
 
   return {
-    netBtcReceived,
-    btcGain,
-    totalFeesUsdt,
-    sellFeeUsdt,
-    buyFeeBtc,
-    netSellUsdt,
+    netBaseReceived,
+    baseGain,
+    totalFeesQuote,
+    sellFeeQuote,
+    buyFeeBase,
+    netSellQuote,
   };
 }
 
@@ -48,14 +48,11 @@ export function calculateAccumulation(params: TradeParams) {
  * 场景：已低价买入，求覆盖手续费的最小卖出价
  */
 export function calculateBreakEven(buyPrice: number, quantity: number, buyFeeRate: number, sellFeeRate: number): number {
-  // 买入总支出 = (价格 * 数量) / (1 - 买入手续费率) -> 如果买入是扣币，则支出就是 价格 * 数量
-  // 注意：如果是买入扣币，买入时支付了买价 * 数量的 USDT，得到了 数量 * (1 - buyFeeRate) 的币
+  const buyCostQuote = buyPrice * quantity;
+  const baseReceived = quantity * (1 - buyFeeRate);
   
-  const buyCostUsdt = buyPrice * quantity;
-  const btcReceived = quantity * (1 - buyFeeRate);
-  
-  // 目标：(SellPrice * btcReceived * (1 - sellFeeRate)) = buyCostUsdt
-  return buyCostUsdt / (btcReceived * (1 - sellFeeRate));
+  // 目标：(SellPrice * baseReceived * (1 - sellFeeRate)) = buyCostQuote
+  return buyCostQuote / (baseReceived * (1 - sellFeeRate));
 }
 
 /**
@@ -68,18 +65,18 @@ export function calculateNetProfit(
   buyFeeRate: number,
   sellFeeRate: number
 ): { profit: number; fees: number } {
-  // 买入支出 (USDT)
+  // 买入支出 (Quote)
   const buyTotal = buyPrice * quantity;
-  // 实得币数 (BTC)
-  const btcReceived = quantity * (1 - buyFeeRate);
+  // 实得币数 (Base)
+  const baseReceived = quantity * (1 - buyFeeRate);
   
-  // 卖出总收入 (USDT)
-  const sellTotal = sellPrice * btcReceived;
-  // 卖出手续费 (USDT)
+  // 卖出总收入 (Quote)
+  const sellTotal = sellPrice * baseReceived;
+  // 卖出手续费 (Quote)
   const sellFee = sellTotal * sellFeeRate;
   
   const netProfit = sellTotal - sellFee - buyTotal;
-  const totalFeesUsdt = (buyPrice * quantity * buyFeeRate) + sellFee; // 近似折算
+  const totalFeesQuote = (buyPrice * quantity * buyFeeRate) + sellFee; // 近似折算
 
-  return { profit: netProfit, fees: totalFeesUsdt };
+  return { profit: netProfit, fees: totalFeesQuote };
 }
