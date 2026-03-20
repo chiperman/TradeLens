@@ -5,6 +5,7 @@ import { calculateBreakEven, calculateNetProfit } from "@/lib/calculator";
 import { useBinancePrice } from "@/hooks/use-binance-price";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTradeHistory } from "@/hooks/use-trade-history";
+import { useExchangeRate } from "@/hooks/use-exchange-rate";
 import { createClient } from "@/lib/supabase";
 import { type User } from "@supabase/supabase-js";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Radio, Save, History, User as UserIcon } from "lucide-react";
+import { RefreshCw, Radio, Save, History, User as UserIcon, Coins } from "lucide-react";
+import { AuthComponent } from "@/components/auth-component";
 
 export default function CalculatorPage() {
   const supabase = createClient();
@@ -20,6 +22,9 @@ export default function CalculatorPage() {
 
   // Binance Real-time Price Hook
   const { price: livePrice, isConnected } = useBinancePrice("BTCUSDT");
+
+  // Exchange Rate Hook
+  const { rate: cnyRate, isLoading: isRateLoading } = useExchangeRate();
 
   // LocalStorage Persisted State for Fees
   const [makerFee, setMakerFee] = useLocalStorage<string>("tradelens_maker_fee", "0.1");
@@ -107,12 +112,18 @@ export default function CalculatorPage() {
                 <Radio className={`w-3 h-3 ${isConnected ? "animate-pulse" : ""}`} />
                 {isConnected ? "Binance Live" : "Offline"}
               </div>
+              {cnyRate && (
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                  <Coins className="w-3 h-3" />
+                  USD/CNY: {cnyRate.toFixed(2)}
+                </div>
+              )}
             </div>
             <p className="text-muted-foreground text-sm">精准测算波段交易的真实盈亏与保本价</p>
           </div>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <UserIcon className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <AuthComponent />
+          </div>
         </div>
 
         {/* 基础参数卡片 */}
