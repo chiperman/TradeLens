@@ -16,13 +16,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { 
-  RefreshCw, Radio, Save, History, User as UserIcon, Coins, Activity, 
-  Trash2, TrendingUp, TrendingDown, ArrowRightLeft, Check, ChevronsUpDown, Search 
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  RefreshCw,
+  Radio,
+  Save,
+  History,
+  User as UserIcon,
+  Coins,
+  Activity,
+  Trash2,
+  TrendingUp,
+  TrendingDown,
+  ArrowRightLeft,
+  Check,
+  ChevronsUpDown,
+  Search,
+  Layers,
 } from "lucide-react";
 import { AuthComponent } from "@/components/auth-component";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
+import { OptionsCalculator } from "@/components/calculators/options/options-calculator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import LanguageSwitcher from "@/components/language-switcher";
 import { cn } from "@/lib/utils";
@@ -88,14 +109,15 @@ export default function CalculatorPage() {
   // Core Input States
   const [sellPrice, setSellPrice] = useState<string>("70000");
   const [quantity, setQuantity] = useState<string>("0.1");
-  
+
   // Scenario A (Manual/Locked)
   const [buyPriceA, setBuyPriceA] = useState<string>("69000");
   const [useManualUsdtA, setUseManualUsdtA] = useState<boolean>(false);
   const [manualUsdtA, setManualUsdtA] = useState<string>("7000");
 
   // Trade History Hook
-  const { history, saveCalculation, deleteCalculation, exportToExcel, exportToJSON } = useTradeHistory();
+  const { history, saveCalculation, deleteCalculation, exportToExcel, exportToJSON } =
+    useTradeHistory();
 
   // Asset Summary Hook
   const { assets, loading: isAssetsLoading } = useAssets();
@@ -105,7 +127,7 @@ export default function CalculatorPage() {
   }, [supabase]);
 
   // --- Calculations ---
-  
+
   // Shared Sell Logic
   const sellStats = useMemo(() => {
     const sPrice = parseFloat(sellPrice);
@@ -158,11 +180,14 @@ export default function CalculatorPage() {
     const qty = parseFloat(quantity);
     const netSell = sellStats.net;
     if (isNaN(qty) || isNaN(netSell)) return 0;
-    
+
     return (netSell * (1 - fRate)) / qty;
   }, [sellStats.net, quantity, feeRate]);
 
-  const handleSave = async (type: "break_even" | "profit", customData?: { buyPrice?: number; profit?: number; fees?: number }) => {
+  const handleSave = async (
+    type: "break_even" | "profit",
+    customData?: { buyPrice?: number; profit?: number; fees?: number }
+  ) => {
     if (!user) {
       alert(tAuth("loginRequired") || "请先登录以保存记录");
       return;
@@ -199,10 +224,12 @@ export default function CalculatorPage() {
             </h1>
             <div className="flex items-center gap-2">
               <span className="w-8 h-[2px] bg-primary/30 rounded-full" />
-              <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em]">{tCommon("subtitle")}</p>
+              <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em]">
+                {tCommon("subtitle")}
+              </p>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             <LanguageSwitcher />
             <ThemeToggle />
@@ -219,11 +246,14 @@ export default function CalculatorPage() {
                     <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden" align="end">
+                <PopoverContent
+                  className="w-[200px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden"
+                  align="end"
+                >
                   <Command className="bg-background/95 backdrop-blur-md">
-                    <CommandInput 
+                    <CommandInput
                       placeholder={tCalc("searchSymbol")}
-                      className="h-9 text-xs" 
+                      className="h-9 text-xs"
                       value={symbolInput}
                       onValueChange={setSymbolInput}
                       onKeyDown={(e) => {
@@ -236,10 +266,12 @@ export default function CalculatorPage() {
                     />
                     <CommandList>
                       <CommandEmpty className="py-6 text-center">
-                        <p className="text-[10px] font-black text-muted-foreground uppercase mb-2">{tCalc("noSymbolsFound")}</p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <p className="text-[10px] font-black text-muted-foreground uppercase mb-2">
+                          {tCalc("noSymbolsFound")}
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           className="h-7 text-[9px] font-bold uppercase tracking-widest"
                           onClick={() => {
                             handleSymbolChange(symbolInput);
@@ -276,8 +308,12 @@ export default function CalculatorPage() {
                   </Command>
                 </PopoverContent>
               </Popover>
-              <div className={`flex items-center gap-2 pl-2 border-l ${isConnected ? "border-green-500/20" : "border-red-500/20"}`}>
-                <Radio className={`w-3.5 h-3.5 ${isConnected ? "text-green-500 animate-pulse" : "text-red-500"}`} />
+              <div
+                className={`flex items-center gap-2 pl-2 border-l ${isConnected ? "border-green-500/20" : "border-red-500/20"}`}
+              >
+                <Radio
+                  className={`w-3.5 h-3.5 ${isConnected ? "text-green-500 animate-pulse" : "text-red-500"}`}
+                />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
                   ${livePrice?.toLocaleString() || "---"}
                 </span>
@@ -305,25 +341,62 @@ export default function CalculatorPage() {
                     <TrendingDown className="w-3.5 h-3.5 text-red-500" />
                     {tCalc("sellParameters")}
                   </CardTitle>
-                  <span className="text-[8px] font-black py-0.5 px-2 bg-slate-100 text-slate-500 rounded-full tracking-tighter">SELL PARAMETERS</span>
+                  <span className="text-[8px] font-black py-0.5 px-2 bg-slate-100 text-slate-500 rounded-full tracking-tighter">
+                    SELL PARAMETERS
+                  </span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="sellPrice" className="text-[10px] font-bold uppercase text-muted-foreground">{tCalc("sellPrice")} ({quoteAsset})</Label>
-                  <Input id="sellPrice" type="number" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} className="font-mono h-9" />
+                  <Label
+                    htmlFor="sellPrice"
+                    className="text-[10px] font-bold uppercase text-muted-foreground"
+                  >
+                    {tCalc("sellPrice")} ({quoteAsset})
+                  </Label>
+                  <Input
+                    id="sellPrice"
+                    type="number"
+                    value={sellPrice}
+                    onChange={(e) => setSellPrice(e.target.value)}
+                    className="font-mono h-9"
+                  />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="quantity" className="text-[10px] font-bold uppercase text-muted-foreground">{tCalc("quantity")} ({baseAsset})</Label>
-                  <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="font-mono h-9" />
+                  <Label
+                    htmlFor="quantity"
+                    className="text-[10px] font-bold uppercase text-muted-foreground"
+                  >
+                    {tCalc("quantity")} ({baseAsset})
+                  </Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    className="font-mono h-9"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="feeRate" className="text-[10px] font-bold uppercase text-muted-foreground">{tCalc("feeRate")}</Label>
-                    <Input id="feeRate" type="number" value={feeRate} onChange={(e) => setFeeRate(e.target.value)} className="font-mono text-center h-9" />
+                    <Label
+                      htmlFor="feeRate"
+                      className="text-[10px] font-bold uppercase text-muted-foreground"
+                    >
+                      {tCalc("feeRate")}
+                    </Label>
+                    <Input
+                      id="feeRate"
+                      type="number"
+                      value={feeRate}
+                      onChange={(e) => setFeeRate(e.target.value)}
+                      className="font-mono text-center h-9"
+                    />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">{tCalc("netReceived")} {quoteAsset}</Label>
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">
+                      {tCalc("netReceived")} {quoteAsset}
+                    </Label>
                     <div className="h-9 flex items-center px-3 border rounded-md bg-muted/30 font-mono text-xs font-bold text-muted-foreground">
                       {sellStats.net.toFixed(2)}
                     </div>
@@ -341,24 +414,45 @@ export default function CalculatorPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="buyPriceA" className="text-[10px] font-bold uppercase text-muted-foreground">{tCalc("buyPriceExecuted")}</Label>
-                  <Input id="buyPriceA" type="number" value={buyPriceA} onChange={(e) => setBuyPriceA(e.target.value)} className="font-mono border-green-500/20 h-9" />
+                  <Label
+                    htmlFor="buyPriceA"
+                    className="text-[10px] font-bold uppercase text-muted-foreground"
+                  >
+                    {tCalc("buyPriceExecuted")}
+                  </Label>
+                  <Input
+                    id="buyPriceA"
+                    type="number"
+                    value={buyPriceA}
+                    onChange={(e) => setBuyPriceA(e.target.value)}
+                    className="font-mono border-green-500/20 h-9"
+                  />
                 </div>
                 <div className="flex items-center space-x-2 pt-1">
-                  <Checkbox 
-                    id="useManual" 
-                    checked={useManualUsdtA} 
-                    onCheckedChange={(checked) => setUseManualUsdtA(checked as boolean)} 
+                  <Checkbox
+                    id="useManual"
+                    checked={useManualUsdtA}
+                    onCheckedChange={(checked) => setUseManualUsdtA(checked as boolean)}
                   />
-                  <Label htmlFor="useManual" className="text-xs font-bold text-muted-foreground cursor-pointer">{tCalc("useManualUsdt")}</Label>
+                  <Label
+                    htmlFor="useManual"
+                    className="text-xs font-bold text-muted-foreground cursor-pointer"
+                  >
+                    {tCalc("useManualUsdt")}
+                  </Label>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="manualUsdtA" className="text-[10px] font-bold uppercase text-muted-foreground">{tCalc("buyCost")} ({quoteAsset})</Label>
-                  <Input 
+                  <Label
+                    htmlFor="manualUsdtA"
+                    className="text-[10px] font-bold uppercase text-muted-foreground"
+                  >
+                    {tCalc("buyCost")} ({quoteAsset})
+                  </Label>
+                  <Input
                     id="manualUsdtA"
-                    type="number" 
-                    value={useManualUsdtA ? manualUsdtA : sellStats.net.toFixed(2)} 
-                    onChange={(e) => setManualUsdtA(e.target.value)} 
+                    type="number"
+                    value={useManualUsdtA ? manualUsdtA : sellStats.net.toFixed(2)}
+                    onChange={(e) => setManualUsdtA(e.target.value)}
                     disabled={!useManualUsdtA}
                     className={`font-mono h-9 ${!useManualUsdtA ? "bg-muted/50" : "border-green-500/20"}`}
                   />
@@ -378,9 +472,13 @@ export default function CalculatorPage() {
                     <div className="space-y-1">
                       <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2 text-slate-800">
                         {tCalc("labelA") || "Scenario A"}
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-50 text-green-600 rounded-full border border-green-100">{tCalc("executionStats") || "成交统计"}</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-50 text-green-600 rounded-full border border-green-100">
+                          {tCalc("executionStats") || "成交统计"}
+                        </span>
                       </h3>
-                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{tCalc("historicalPerformance") || "Historical Performance"}</p>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                        {tCalc("historicalPerformance") || "Historical Performance"}
+                      </p>
                     </div>
                     <div className="p-2 bg-slate-50 rounded-xl">
                       <ArrowRightLeft className="w-4 h-4 text-slate-300" />
@@ -389,12 +487,23 @@ export default function CalculatorPage() {
                 </CardHeader>
                 <CardContent className="space-y-6 flex-1">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">{tCalc("netBaseReceived") || "最终获得币量"}</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">
+                      {tCalc("netBaseReceived") || "最终获得币量"}
+                    </p>
                     <div className="text-3xl font-mono font-black text-slate-900 tracking-tighter">
-                      {scenarioAResult?.netBaseReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-30 text-slate-400">{baseAsset}</span>
+                      {scenarioAResult?.netBaseReceived.toFixed(8) || "0.00000000"}{" "}
+                      <span className="text-sm font-bold opacity-30 text-slate-400">
+                        {baseAsset}
+                      </span>
                     </div>
-                    <p className={`text-[11px] font-black flex items-center gap-1.5 ${ (scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      {(scenarioAResult?.baseGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    <p
+                      className={`text-[11px] font-black flex items-center gap-1.5 ${(scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}
+                    >
+                      {(scenarioAResult?.baseGain ?? 0) >= 0 ? (
+                        <TrendingUp className="w-3 h-3" />
+                      ) : (
+                        <TrendingDown className="w-3 h-3" />
+                      )}
                       {(scenarioAResult?.baseGain ?? 0) >= 0 ? "+" : ""}
                       {scenarioAResult?.baseGain.toFixed(8)} {baseAsset}
                     </p>
@@ -403,32 +512,66 @@ export default function CalculatorPage() {
                   <div className="py-5 border-y border-slate-50">
                     <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">
                       <span>手续费明细</span>
-                      <span className="text-slate-900">{tCalc("total") || "Total"} ≈ ¥{( (scenarioAResult?.totalFeesQuote || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
+                      <span className="text-slate-900">
+                        {tCalc("total") || "Total"} ≈ ¥
+                        {((scenarioAResult?.totalFeesQuote || 0) * (cnyRate || 7.23)).toFixed(2)}
+                      </span>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-[11px] font-mono">
                       <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-slate-400">SELL ({quoteAsset})</Label>
-                        <span className="font-bold text-slate-700">{scenarioAResult?.sellFeeQuote.toFixed(2)}</span>
+                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-slate-400">
+                          SELL ({quoteAsset})
+                        </Label>
+                        <span className="font-bold text-slate-700">
+                          {scenarioAResult?.sellFeeQuote.toFixed(2)}
+                        </span>
                       </div>
                       <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-slate-400">BUY ({baseAsset})</Label>
-                        <span className="font-bold text-slate-700">{scenarioAResult?.buyFeeBase.toFixed(6)}</span>
+                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-slate-400">
+                          BUY ({baseAsset})
+                        </Label>
+                        <span className="font-bold text-slate-700">
+                          {scenarioAResult?.buyFeeBase.toFixed(6)}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">{tCalc("repurchaseProfitEst") || "回购收益估算 (折合)"}</p>
-                    <div className={`text-4xl font-mono font-black tracking-tighter ${ (scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      $ {Math.abs( (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA) ).toFixed(2)}
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">
+                      {tCalc("repurchaseProfitEst") || "回购收益估算 (折合)"}
+                    </p>
+                    <div
+                      className={`text-4xl font-mono font-black tracking-tighter ${(scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}
+                    >
+                      ${" "}
+                      {Math.abs((scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA)).toFixed(
+                        2
+                      )}
                     </div>
                     <p className="text-xs font-black text-slate-300 uppercase tracking-widest">
-                      ≈ ¥ { ( (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
+                      ≈ ¥{" "}
+                      {(
+                        (scenarioAResult?.baseGain ?? 0) *
+                        parseFloat(buyPriceA) *
+                        (cnyRate || 7.23)
+                      ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </CardContent>
                 <CardFooter className="pt-2 px-6 pb-6">
-                  <Button variant="outline" size="sm" className="w-full text-[10px] font-black uppercase tracking-[0.2em] gap-2 h-10 rounded-xl hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all" onClick={() => handleSave("profit", { profit: (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA), fees: scenarioAResult?.totalFeesQuote, buyPrice: parseFloat(buyPriceA) })}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-[10px] font-black uppercase tracking-[0.2em] gap-2 h-10 rounded-xl hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all"
+                    onClick={() =>
+                      handleSave("profit", {
+                        profit: (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA),
+                        fees: scenarioAResult?.totalFeesQuote,
+                        buyPrice: parseFloat(buyPriceA),
+                      })
+                    }
+                  >
                     <Save className="w-3.5 h-3.5" /> {tCalc("saveBtn")}
                   </Button>
                 </CardFooter>
@@ -445,23 +588,42 @@ export default function CalculatorPage() {
                     <div className="space-y-1">
                       <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2 text-blue-800">
                         {tCalc("labelB") || "Scenario B"}
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded-full border border-blue-100">{tCalc("liveBuy") || "实时买入"}</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded-full border border-blue-100">
+                          {tCalc("liveBuy") || "实时买入"}
+                        </span>
                       </h3>
-                      <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">{tCalc("realTimePrediction") || "Real-time Prediction"}</p>
+                      <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">
+                        {tCalc("realTimePrediction") || "Real-time Prediction"}
+                      </p>
                     </div>
-                    <div className={`p-2 rounded-xl border-none transition-all ${isConnected ? "bg-green-50" : "bg-slate-50"}`}>
-                      <Radio className={`w-4 h-4 ${isConnected ? "text-green-500 animate-pulse" : "text-slate-300"}`} />
+                    <div
+                      className={`p-2 rounded-xl border-none transition-all ${isConnected ? "bg-green-50" : "bg-slate-50"}`}
+                    >
+                      <Radio
+                        className={`w-4 h-4 ${isConnected ? "text-green-500 animate-pulse" : "text-slate-300"}`}
+                      />
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6 flex-1 relative z-10">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">{tCalc("predictedQuantity")}</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">
+                      {tCalc("predictedQuantity")}
+                    </p>
                     <div className="text-3xl font-mono font-black text-slate-900 tracking-tighter">
-                      {scenarioBResult?.netBaseReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-30 text-slate-400">{baseAsset}</span>
+                      {scenarioBResult?.netBaseReceived.toFixed(8) || "0.00000000"}{" "}
+                      <span className="text-sm font-bold opacity-30 text-slate-400">
+                        {baseAsset}
+                      </span>
                     </div>
-                    <p className={`text-[11px] font-black flex items-center gap-1.5 ${ (scenarioBResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      {(scenarioBResult?.baseGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    <p
+                      className={`text-[11px] font-black flex items-center gap-1.5 ${(scenarioBResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}
+                    >
+                      {(scenarioBResult?.baseGain ?? 0) >= 0 ? (
+                        <TrendingUp className="w-3 h-3" />
+                      ) : (
+                        <TrendingDown className="w-3 h-3" />
+                      )}
                       {(scenarioBResult?.baseGain ?? 0) >= 0 ? "+" : ""}
                       {scenarioBResult?.baseGain.toFixed(8)} {baseAsset}
                     </p>
@@ -470,45 +632,82 @@ export default function CalculatorPage() {
                   <div className="py-5 border-y border-blue-100/30">
                     <div className="flex justify-between text-[10px] font-black text-blue-400 uppercase mb-3 tracking-widest">
                       <span>手续费明细 (实时)</span>
-                      <span className="text-blue-600">{tCalc("total") || "Total"} ≈ ¥{( (scenarioBResult?.totalFeesQuote || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
+                      <span className="text-blue-600">
+                        {tCalc("total") || "Total"} ≈ ¥
+                        {((scenarioBResult?.totalFeesQuote || 0) * (cnyRate || 7.23)).toFixed(2)}
+                      </span>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-[11px] font-mono">
                       <div className="bg-blue-50/30 p-3 rounded-xl border border-blue-100/50">
-                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-blue-400">SELL ({quoteAsset})</Label>
-                        <span className="font-bold text-blue-900">{scenarioBResult?.sellFeeQuote.toFixed(2)}</span>
+                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-blue-400">
+                          SELL ({quoteAsset})
+                        </Label>
+                        <span className="font-bold text-blue-900">
+                          {scenarioBResult?.sellFeeQuote.toFixed(2)}
+                        </span>
                       </div>
                       <div className="bg-blue-50/30 p-3 rounded-xl border border-blue-100/50">
-                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-blue-400">BUY ({baseAsset})</Label>
-                        <span className="font-bold text-blue-900">{scenarioBResult?.buyFeeBase.toFixed(6)}</span>
+                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-blue-400">
+                          BUY ({baseAsset})
+                        </Label>
+                        <span className="font-bold text-blue-900">
+                          {scenarioBResult?.buyFeeBase.toFixed(6)}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex justify-between items-end mb-1">
-                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">{tCalc("liveProfitEst") || "当前市价收益 (折合)"}</p>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">
+                        {tCalc("liveProfitEst") || "当前市价收益 (折合)"}
+                      </p>
                       <div className="text-right">
-                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest leading-none">Live Price</p>
-                        <p className="text-[10px] font-mono font-black text-blue-500 leading-none mt-1">${livePrice?.toLocaleString()}</p>
+                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest leading-none">
+                          Live Price
+                        </p>
+                        <p className="text-[10px] font-mono font-black text-blue-500 leading-none mt-1">
+                          ${livePrice?.toLocaleString()}
+                        </p>
                       </div>
                     </div>
-                    <div className={`text-4xl font-mono font-black tracking-tighter ${ (scenarioBResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      $ {Math.abs( (scenarioBResult?.baseGain ?? 0) * (livePrice || 0) ).toFixed(2)}
+                    <div
+                      className={`text-4xl font-mono font-black tracking-tighter ${(scenarioBResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}
+                    >
+                      $ {Math.abs((scenarioBResult?.baseGain ?? 0) * (livePrice || 0)).toFixed(2)}
                     </div>
                     <p className="text-xs font-black text-slate-300 uppercase tracking-widest">
-                      ≈ ¥ { ( (scenarioBResult?.baseGain ?? 0) * (livePrice || 0) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
+                      ≈ ¥{" "}
+                      {(
+                        (scenarioBResult?.baseGain ?? 0) *
+                        (livePrice || 0) *
+                        (cnyRate || 7.23)
+                      ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </CardContent>
                 <CardFooter className="pt-2 px-6 pb-6 relative z-10 flex flex-col gap-4">
                   <div className="w-full h-px bg-blue-100/50" />
                   <div className="w-full flex justify-between items-center text-[10px] font-black">
-                    <span className="text-slate-400 uppercase tracking-widest">{tCalc("breakEven")}:</span>
+                    <span className="text-slate-400 uppercase tracking-widest">
+                      {tCalc("breakEven")}:
+                    </span>
                     <span className="text-red-500 font-mono tracking-tighter text-sm">
                       ${breakEvenB.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <Button variant="ghost" size="sm" className="w-full text-[10px] font-black uppercase tracking-[0.2em] gap-2 h-10 rounded-xl bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 transition-all border border-blue-100" onClick={() => handleSave("profit", { profit: (scenarioBResult?.baseGain ?? 0) * (livePrice || 0), fees: scenarioBResult?.totalFeesQuote, buyPrice: livePrice ?? undefined })}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-[10px] font-black uppercase tracking-[0.2em] gap-2 h-10 rounded-xl bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 transition-all border border-blue-100"
+                    onClick={() =>
+                      handleSave("profit", {
+                        profit: (scenarioBResult?.baseGain ?? 0) * (livePrice || 0),
+                        fees: scenarioBResult?.totalFeesQuote,
+                        buyPrice: livePrice ?? undefined,
+                      })
+                    }
+                  >
                     <Save className="w-3.5 h-3.5" /> {tCalc("saveBtnLive") || "保存实时成交记录"}
                   </Button>
                 </CardFooter>
@@ -520,14 +719,38 @@ export default function CalculatorPage() {
         {/* Secondary Section: History & Assets */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-6">
           <Tabs defaultValue="history" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100/50 p-1 rounded-2xl border border-slate-200/50">
-              <TabsTrigger value="history" className="text-xs font-bold uppercase tracking-widest rounded-lg">{tHistory("title")}</TabsTrigger>
-              <TabsTrigger value="assets" className="text-xs font-bold uppercase tracking-widest rounded-lg">{tAssets("title")}</TabsTrigger>
-              <TabsTrigger value="analytics" className="text-xs font-bold uppercase tracking-widest gap-2 rounded-lg">
+            <TabsList className="grid w-full grid-cols-4 mb-6 bg-slate-100/50 p-1 rounded-2xl border border-slate-200/50">
+              <TabsTrigger
+                value="history"
+                className="text-xs font-bold uppercase tracking-widest rounded-lg"
+              >
+                {tHistory("title")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="assets"
+                className="text-xs font-bold uppercase tracking-widest rounded-lg"
+              >
+                {tAssets("title")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="options"
+                className="text-xs font-bold uppercase tracking-widest gap-2 rounded-lg"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                Options
+              </TabsTrigger>
+              <TabsTrigger
+                value="analytics"
+                className="text-xs font-bold uppercase tracking-widest gap-2 rounded-lg"
+              >
                 <Activity className="w-3.5 h-3.5" />
                 {tCalc("smartAnalytics") || "智能分析"}
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="options" className="mt-0">
+              <OptionsCalculator />
+            </TabsContent>
 
             <TabsContent value="analytics" className="mt-0">
               <AnalyticsDashboard />
@@ -541,21 +764,42 @@ export default function CalculatorPage() {
                       <div className="p-2 bg-primary/5 rounded-lg border border-primary/10">
                         <History className="w-3.5 h-3.5 text-primary" />
                       </div>
-                      <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recent Calculations</CardTitle>
+                      <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        Recent Calculations
+                      </CardTitle>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={exportToExcel} className="h-6 px-2 text-[9px] font-bold uppercase">Excel</Button>
-                      <Button variant="ghost" size="sm" onClick={exportToJSON} className="h-6 px-2 text-[9px] font-bold uppercase">JSON</Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={exportToExcel}
+                        className="h-6 px-2 text-[9px] font-bold uppercase"
+                      >
+                        Excel
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={exportToJSON}
+                        className="h-6 px-2 text-[9px] font-bold uppercase"
+                      >
+                        JSON
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="px-0 space-y-3">
                   {history.length > 0 ? (
                     history.map((item, idx) => (
-                      <div key={idx} className="group relative flex justify-between items-center p-4 rounded-2xl bg-white border border-slate-100 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all">
+                      <div
+                        key={idx}
+                        className="group relative flex justify-between items-center p-4 rounded-2xl bg-white border border-slate-100 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all"
+                      >
                         <div className="flex flex-col gap-1">
                           <span className="font-mono text-sm font-black tracking-tighter text-slate-700">
-                            {(item.buy_price || 0).toLocaleString()} <span className="text-slate-300 mx-2 font-light">→</span> {(item.sell_price || 0).toLocaleString()}
+                            {(item.buy_price || 0).toLocaleString()}{" "}
+                            <span className="text-slate-300 mx-2 font-light">→</span>{" "}
+                            {(item.sell_price || 0).toLocaleString()}
                           </span>
                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                             <Activity className="w-3 h-3 opacity-40" />
@@ -564,8 +808,11 @@ export default function CalculatorPage() {
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <p className={`font-mono text-sm font-black ${ (item.profit || 0) >= 0 ? "text-green-500" : "text-slate-400"}`}>
-                              {(item.profit || 0).toFixed(2)} <span className="text-[10px] opacity-30">USDT</span>
+                            <p
+                              className={`font-mono text-sm font-black ${(item.profit || 0) >= 0 ? "text-green-500" : "text-slate-400"}`}
+                            >
+                              {(item.profit || 0).toFixed(2)}{" "}
+                              <span className="text-[10px] opacity-30">USDT</span>
                             </p>
                           </div>
                           {user && (
@@ -573,7 +820,10 @@ export default function CalculatorPage() {
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500"
-                              onClick={() => { if(confirm(tCommon("confirmDelete") || "确定删除？")) deleteCalculation(item.id!) }}
+                              onClick={() => {
+                                if (confirm(tCommon("confirmDelete") || "确定删除？"))
+                                  deleteCalculation(item.id!);
+                              }}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
@@ -591,46 +841,68 @@ export default function CalculatorPage() {
             </TabsContent>
 
             <TabsContent value="assets" className="mt-0">
-               <Card className="border-none shadow-none bg-transparent">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {isAssetsLoading ? (
-                      <div className="col-span-full py-20 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
-                        <RefreshCw className="w-5 h-5 mx-auto mb-4 animate-spin opacity-20" />
-                        {tCommon("loading") || "Loading Portfolio..."}
-                      </div>
-                    ) : assets.length > 0 ? (
-                      assets.map((asset) => (
-                        <div key={asset.base_asset} className="group relative bg-white border border-slate-100 p-5 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:border-primary/20 transition-all duration-300">
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 bg-primary/5 rounded-lg border border-primary/10 group-hover:bg-primary group-hover:text-white transition-colors">
-                              <Coins className="w-3.5 h-3.5" />
-                            </div>
-                            <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-full">{asset.base_asset}</span>
+              <Card className="border-none shadow-none bg-transparent">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {isAssetsLoading ? (
+                    <div className="col-span-full py-20 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                      <RefreshCw className="w-5 h-5 mx-auto mb-4 animate-spin opacity-20" />
+                      {tCommon("loading") || "Loading Portfolio..."}
+                    </div>
+                  ) : assets.length > 0 ? (
+                    assets.map((asset) => (
+                      <div
+                        key={asset.base_asset}
+                        className="group relative bg-white border border-slate-100 p-5 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:border-primary/20 transition-all duration-300"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="p-2 bg-primary/5 rounded-lg border border-primary/10 group-hover:bg-primary group-hover:text-white transition-colors">
+                            <Coins className="w-3.5 h-3.5" />
                           </div>
-                          <p className="text-2xl font-mono font-black text-slate-900 leading-none tracking-tighter">
-                            {asset.total_quantity.toLocaleString(undefined, { maximumFractionDigits: 6 })}
-                          </p>
-                          <div className="mt-5 pt-4 border-t border-slate-50 flex flex-col gap-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{tAssets("avgCost") || "Avg Cost"}</span>
-                              <span className="text-[10px] font-mono font-bold text-slate-600">${asset.average_price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{tAssets("totalValue") || "Total Value"}</span>
-                              <span className="text-[10px] font-mono font-black text-blue-600">${ (asset.total_quantity * asset.average_price).toLocaleString(undefined, { minimumFractionDigits: 2 }) }</span>
-                            </div>
+                          <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-full">
+                            {asset.base_asset}
+                          </span>
+                        </div>
+                        <p className="text-2xl font-mono font-black text-slate-900 leading-none tracking-tighter">
+                          {asset.total_quantity.toLocaleString(undefined, {
+                            maximumFractionDigits: 6,
+                          })}
+                        </p>
+                        <div className="mt-5 pt-4 border-t border-slate-50 flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                              {tAssets("avgCost") || "Avg Cost"}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-slate-600">
+                              $
+                              {asset.average_price.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                              })}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                              {tAssets("totalValue") || "Total Value"}
+                            </span>
+                            <span className="text-[10px] font-mono font-black text-blue-600">
+                              $
+                              {(asset.total_quantity * asset.average_price).toLocaleString(
+                                undefined,
+                                { minimumFractionDigits: 2 }
+                              )}
+                            </span>
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-[2.5rem]">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 leading-loose">
-                          {tAssets("empty")}
-                        </p>
                       </div>
-                    )}
-                  </div>
-               </Card>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-[2.5rem]">
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 leading-loose">
+                        {tAssets("empty")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Card>
             </TabsContent>
           </Tabs>
 
