@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 
 export interface CumulativePnlProps {
-  data: { date: string; cumulativeProfit: number }[];
+  data: { date: string; value: number }[];
   height?: number;
 }
 
@@ -64,7 +64,7 @@ export function CumulativePnlChart({ data, height = 280 }: CumulativePnlProps) {
               />
               <Area
                 type="monotone"
-                dataKey="cumulativeProfit"
+                dataKey="value"
                 stroke="#3b82f6"
                 strokeWidth={2}
                 fill="url(#colorProfit)"
