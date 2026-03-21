@@ -1,7 +1,7 @@
 {
   "Common": {
     "title": "TradeLens",
-    "subtitle": "Professional Repurchase Analysis",
+    "subtitle": "All-in-one Investment Tracking & Analysis",
     "loading": "Loading...",
     "error": "Error occurred",
     "save": "Save",
@@ -12,7 +12,44 @@
     "language": "Language",
     "chinese": "简体中文",
     "english": "English",
-    "confirmDelete": "Are you sure you want to delete?"
+    "confirmDelete": "Are you sure you want to delete?",
+    "comingSoon": "Coming Soon",
+    "comingSoonDesc": "This feature is currently under development."
+  },
+  "Nav": {
+    "dashboard": "Dashboard",
+    "portfolio": "Portfolio",
+    "calculator": "Calculator",
+    "ledger": "Ledger",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "signOut": "Sign Out",
+    "collapse": "Collapse"
+  },
+  "Auth": {
+    "login": "Log In",
+    "register": "Sign Up",
+    "logout": "Log Out",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "name@example.com",
+    "loginButton": "Sign In",
+    "registerButton": "Create Account",
+    "loggingIn": "Signing in...",
+    "registering": "Creating account...",
+    "githubLogin": "Continue with GitHub",
+    "githubRegister": "Sign up with GitHub",
+    "loginTitle": "Welcome Back",
+    "loginSubtitle": "Sign in to access your investment dashboard",
+    "registerTitle": "Create Account",
+    "registerSubtitle": "Sign up to start tracking your portfolio",
+    "loginRequired": "Please login to save records",
+    "orContinueWith": "or",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "goToRegister": "Sign Up",
+    "goToLogin": "Log In",
+    "verifyEmail": "Verification email sent. Please check your inbox."
   },
   "Calculator": {
     "scenarioA": "Scenario A: Manual Entry",
@@ -66,13 +103,5 @@
     "totalValue": "Total Valuation",
     "avgCost": "Avg Cost",
     "empty": "No asset distribution"
-  },
-  "Auth": {
-    "login": "Log In",
-    "logout": "Log Out",
-    "githubLogin": "Continue with GitHub",
-    "loginTitle": "Welcome to TradeLens",
-    "loginSubtitle": "Sync your trading strategies & analysis in cloud",
-    "loginRequired": "Please login to save records"
   }
 }

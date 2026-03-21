@@ -1,7 +1,7 @@
 {
   "Common": {
     "title": "TradeLens",
-    "subtitle": "专业回购分析工具",
+    "subtitle": "全资产投资追踪与分析平台",
     "loading": "加载中...",
     "error": "发生错误",
     "save": "保存",
@@ -12,7 +12,44 @@
     "language": "语言",
     "chinese": "简体中文",
     "english": "English",
-    "confirmDelete": "确定要删除吗？"
+    "confirmDelete": "确定要删除吗？",
+    "comingSoon": "即将上线",
+    "comingSoonDesc": "此功能正在开发中，敬请期待。"
+  },
+  "Nav": {
+    "dashboard": "总览",
+    "portfolio": "持仓",
+    "calculator": "计算器",
+    "ledger": "账本",
+    "analytics": "分析",
+    "settings": "设置",
+    "signOut": "退出登录",
+    "collapse": "收起侧边栏"
+  },
+  "Auth": {
+    "login": "登录",
+    "register": "注册",
+    "logout": "退出",
+    "email": "邮箱",
+    "password": "密码",
+    "emailPlaceholder": "name@example.com",
+    "loginButton": "登录系统",
+    "registerButton": "创建账户",
+    "loggingIn": "登录中...",
+    "registering": "注册中...",
+    "githubLogin": "使用 GitHub 登录",
+    "githubRegister": "通过 GitHub 注册",
+    "loginTitle": "欢迎回来",
+    "loginSubtitle": "登录以访问您的投资追踪面板",
+    "registerTitle": "创建账户",
+    "registerSubtitle": "注册以开始追踪您的投资组合",
+    "loginRequired": "请先登录以保存记录",
+    "orContinueWith": "或者",
+    "noAccount": "没有账户？",
+    "hasAccount": "已有账户？",
+    "goToRegister": "立即注册",
+    "goToLogin": "去登录",
+    "verifyEmail": "验证邮件已发送，请检查您的邮箱后登录。"
   },
   "Calculator": {
     "scenarioA": "场景 A: 已成交手动录入对比",
@@ -66,13 +103,5 @@
     "totalValue": "总资产估值",
     "avgCost": "平均成本",
     "empty": "暂无资产分布"
-  },
-  "Auth": {
-    "login": "登录",
-    "logout": "退出",
-    "githubLogin": "使用 GitHub 登录",
-    "loginTitle": "欢迎使用 TradeLens",
-    "loginSubtitle": "云端同步你的交易策略与分析",
-    "loginRequired": "请先登录以保存记录"
   }
 }
