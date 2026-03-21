@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { decrypt } from "@/lib/crypto";
 import { initializeAdapters, getAdapter } from "@/lib/exchange/registry";
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
  * 去重插入交易记录
  */
 async function upsertTrades(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   userId: string,
   trades: NormalizedTrade[]
 ): Promise<number> {
@@ -142,7 +142,7 @@ async function upsertTrades(
  * 插入资金流水（简单去重：检查时间+金额+交易所）
  */
 async function insertFundFlows(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   userId: string,
   flows: NormalizedFundFlow[]
 ): Promise<number> {

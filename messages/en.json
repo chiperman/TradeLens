@@ -177,6 +177,23 @@
     "brokerTemplates": "Broker Templates",
     "brokerTemplatesDesc": "Quickly load presets from popular brokers",
     "currencyPreference": "Currency Preference",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "apiKeys": "API Keys",
+    "apiKeysDescription": "Configure exchange API keys to enable auto sync",
+    "addKey": "Add",
+    "addKeyFor": "Add API Key for",
+    "label": "Label",
+    "noKeysConfigured": "No API keys configured",
+    "lastSync": "Last sync",
+    "neverSynced": "Never synced",
+    "longbridgeComingSoon": "Longbridge OAuth integration coming soon",
+    "save": "Save",
+    "sync": "Sync",
+    "syncAll": "Sync All",
+    "syncSuccess": "Synced: {trades} trades, {flows} fund flows",
+    "syncFailed": "Sync failed",
+    "testConnection": "Test Connection",
+    "connectionSuccess": "Connected",
+    "connectionFailed": "Connection failed"
   }
 }

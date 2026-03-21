@@ -177,6 +177,23 @@
     "brokerTemplates": "券商预设模板",
     "brokerTemplatesDesc": "快速载入主流券商的费率配置",
     "currencyPreference": "币种偏好",
-    "appearance": "外观设置"
+    "appearance": "外观设置",
+    "apiKeys": "API Key 管理",
+    "apiKeysDescription": "配置各交易所 API Key 以启用自动同步",
+    "addKey": "添加",
+    "addKeyFor": "添加 API Key:",
+    "label": "标签",
+    "noKeysConfigured": "尚未配置 API Key",
+    "lastSync": "上次同步",
+    "neverSynced": "从未同步",
+    "longbridgeComingSoon": "Longbridge OAuth 授权接入即将上线",
+    "save": "保存",
+    "sync": "同步",
+    "syncAll": "全部同步",
+    "syncSuccess": "同步完成：{trades} 笔交易，{flows} 笔资金流水",
+    "syncFailed": "同步失败",
+    "testConnection": "测试连接",
+    "connectionSuccess": "连接成功",
+    "connectionFailed": "连接失败"
   }
 }
