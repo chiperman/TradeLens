@@ -4,12 +4,18 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useFundFlows } from "@/hooks/use-fund-flows";
-import { type Transaction, type TransactionFormData } from "@/types/transaction";
+import {
+  type Transaction,
+  type TransactionFormData,
+  type FundFlow,
+  type FundFlowFormData,
+} from "@/types/transaction";
 import { TransactionTable } from "@/components/ledger/transaction-table";
 import { TransactionForm } from "@/components/ledger/transaction-form";
 import { FundFlowTable } from "@/components/ledger/fund-flow-table";
 import { FundFlowForm } from "@/components/ledger/fund-flow-form";
 import { DataExport } from "@/components/ledger/data-export";
+import { DataImport } from "@/components/ledger/data-import";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, BookOpen, Wallet } from "lucide-react";
@@ -29,6 +35,7 @@ export default function LedgerPage() {
     setSort,
     setPagination,
     createTransaction,
+    bulkCreateTransactions,
     updateTransaction,
     deleteTransaction,
   } = useTransactions();
@@ -38,6 +45,7 @@ export default function LedgerPage() {
     fundFlows,
     loading: ffLoading,
     createFundFlow,
+    updateFundFlow,
     deleteFundFlow,
   } = useFundFlows();
 
@@ -45,11 +53,17 @@ export default function LedgerPage() {
   const [txFormOpen, setTxFormOpen] = useState(false);
   const [ffFormOpen, setFfFormOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [editingFf, setEditingFf] = useState<FundFlow | null>(null);
   const [activeTab, setActiveTab] = useState("transactions");
 
   const handleEditTransaction = (tx: Transaction) => {
     setEditingTx(tx);
     setTxFormOpen(true);
+  };
+
+  const handleEditFundFlow = (ff: FundFlow) => {
+    setEditingFf(ff);
+    setFfFormOpen(true);
   };
 
   const handleDeleteTransaction = async (id: string) => {
@@ -72,17 +86,24 @@ export default function LedgerPage() {
     }
   };
 
+  const handleSubmitFundFlow = async (data: FundFlowFormData) => {
+    if (editingFf) {
+      await updateFundFlow(editingFf.id, data);
+    } else {
+      await createFundFlow(data);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 页头 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {tNav("ledger")}
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight">{tNav("ledger")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
+          <DataImport onImport={bulkCreateTransactions} />
           <DataExport transactions={transactions} fundFlows={fundFlows} />
           {activeTab === "transactions" ? (
             <Button
@@ -126,9 +147,7 @@ export default function LedgerPage() {
             filter={filter}
             onFilterChange={setFilter}
             onSortChange={setSort}
-            onPageChange={(page) =>
-              setPagination((prev) => ({ ...prev, page }))
-            }
+            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
             onEdit={handleEditTransaction}
             onDelete={handleDeleteTransaction}
           />
@@ -138,6 +157,7 @@ export default function LedgerPage() {
           <FundFlowTable
             fundFlows={fundFlows}
             loading={ffLoading}
+            onEdit={handleEditFundFlow}
             onDelete={handleDeleteFundFlow}
           />
         </TabsContent>
@@ -145,6 +165,7 @@ export default function LedgerPage() {
 
       {/* 交易记录表单对话框 */}
       <TransactionForm
+        key={editingTx?.id || "new-tx"}
         open={txFormOpen}
         onOpenChange={(open) => {
           setTxFormOpen(open);
@@ -156,9 +177,14 @@ export default function LedgerPage() {
 
       {/* 资金流水表单对话框 */}
       <FundFlowForm
+        key={editingFf?.id || "new-ff"}
         open={ffFormOpen}
-        onOpenChange={setFfFormOpen}
-        onSubmit={createFundFlow}
+        onOpenChange={(open) => {
+          setFfFormOpen(open);
+          if (!open) setEditingFf(null);
+        }}
+        onSubmit={handleSubmitFundFlow}
+        initialData={editingFf}
       />
     </div>
   );

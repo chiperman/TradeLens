@@ -3,19 +3,16 @@
 import { useTranslations } from "next-intl";
 import { type FundFlow, EXCHANGE_LABELS } from "@/types/transaction";
 import { Card } from "@/components/ui/card";
-import { Trash2, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Trash2, ArrowDownToLine, ArrowUpFromLine, Pencil } from "lucide-react";
 
 interface FundFlowTableProps {
   fundFlows: FundFlow[];
   loading: boolean;
+  onEdit: (flow: FundFlow) => void;
   onDelete: (id: string) => void;
 }
 
-export function FundFlowTable({
-  fundFlows,
-  loading,
-  onDelete,
-}: FundFlowTableProps) {
+export function FundFlowTable({ fundFlows, loading, onEdit, onDelete }: FundFlowTableProps) {
   const t = useTranslations("Ledger");
 
   const formatDate = (dateStr: string) => {
@@ -39,9 +36,7 @@ export function FundFlowTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                {t("time")}
-              </th>
+              <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t("time")}</th>
               <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                 {t("direction")}
               </th>
@@ -102,17 +97,13 @@ export function FundFlowTable({
                   </td>
                   <td
                     className={`py-3 px-4 text-right font-mono font-semibold ${
-                      flow.direction === "deposit"
-                        ? "text-emerald-600"
-                        : "text-orange-600"
+                      flow.direction === "deposit" ? "text-emerald-600" : "text-orange-600"
                     }`}
                   >
                     {flow.direction === "deposit" ? "+" : "-"}
                     {formatAmount(flow.amount)}
                   </td>
-                  <td className="py-3 px-4 text-center text-xs font-medium">
-                    {flow.currency}
-                  </td>
+                  <td className="py-3 px-4 text-center text-xs font-medium">{flow.currency}</td>
                   <td className="py-3 px-4 text-center">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-xs font-medium">
                       {EXCHANGE_LABELS[flow.exchange] ?? flow.exchange}
@@ -122,7 +113,14 @@ export function FundFlowTable({
                     {flow.notes || "—"}
                   </td>
                   <td className="py-3 px-4">
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                        onClick={() => onEdit(flow)}
+                        title={t("edit")}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                       <button
                         className="p-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-muted-foreground hover:text-red-600"
                         onClick={() => onDelete(flow.id)}

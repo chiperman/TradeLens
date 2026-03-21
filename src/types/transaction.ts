@@ -6,19 +6,19 @@
 // 枚举常量
 // ============================================================
 
-export const ASSET_CLASSES = ['us_stock', 'hk_stock', 'crypto'] as const;
+export const ASSET_CLASSES = ["us_stock", "hk_stock", "crypto"] as const;
 export type AssetClass = (typeof ASSET_CLASSES)[number];
 
-export const EXCHANGES = ['longbridge', 'binance', 'bitget', 'okx'] as const;
+export const EXCHANGES = ["longbridge", "binance", "bitget", "okx"] as const;
 export type Exchange = (typeof EXCHANGES)[number];
 
-export const TRADE_SIDES = ['BUY', 'SELL'] as const;
+export const TRADE_SIDES = ["BUY", "SELL"] as const;
 export type TradeSide = (typeof TRADE_SIDES)[number];
 
-export const DATA_SOURCES = ['auto', 'manual', 'import'] as const;
+export const DATA_SOURCES = ["auto", "manual", "import"] as const;
 export type DataSource = (typeof DATA_SOURCES)[number];
 
-export const FUND_DIRECTIONS = ['deposit', 'withdrawal'] as const;
+export const FUND_DIRECTIONS = ["deposit", "withdrawal"] as const;
 export type FundDirection = (typeof FUND_DIRECTIONS)[number];
 
 // ============================================================
@@ -59,6 +59,26 @@ export interface FundFlow {
   notes: string | null;
   transacted_at: string;
   created_at: string;
+}
+
+// ============================================================
+// 手续费配置类型
+// ============================================================
+
+export type FeeType = "percentage" | "per_share" | "fixed";
+
+export interface FeeModel {
+  type: FeeType;
+  rate: number;
+  min?: number;
+  currency: string;
+}
+
+export interface FeeConfig {
+  us_stock: FeeModel;
+  hk_stock: FeeModel;
+  crypto: FeeModel;
+  option?: FeeModel;
 }
 
 // ============================================================
@@ -109,7 +129,7 @@ export interface PaginationState {
   total: number;
 }
 
-export type SortDirection = 'asc' | 'desc';
+export type SortDirection = "asc" | "desc";
 
 export interface SortState {
   column: string;
@@ -121,14 +141,14 @@ export interface SortState {
 // ============================================================
 
 export const ASSET_CLASS_LABELS: Record<AssetClass, { zh: string; en: string }> = {
-  us_stock: { zh: '美股', en: 'US Stock' },
-  hk_stock: { zh: '港股', en: 'HK Stock' },
-  crypto: { zh: '加密货币', en: 'Crypto' },
+  us_stock: { zh: "美股", en: "US Stock" },
+  hk_stock: { zh: "港股", en: "HK Stock" },
+  crypto: { zh: "加密货币", en: "Crypto" },
 };
 
 export const EXCHANGE_LABELS: Record<string, string> = {
-  longbridge: 'Longbridge',
-  binance: 'Binance',
-  bitget: 'Bitget',
-  okx: 'OKX',
+  longbridge: "Longbridge",
+  binance: "Binance",
+  bitget: "Bitget",
+  okx: "OKX",
 };

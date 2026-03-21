@@ -57,12 +57,25 @@ export function useFundFlows() {
     [supabase, fetchFundFlows]
   );
 
+  const updateFundFlow = useCallback(
+    async (id: string, data: Partial<FundFlowFormData>) => {
+      const { error: updateError } = await supabase
+        .from("fund_flows")
+        .update({
+          ...data,
+          amount: data.amount !== undefined ? Number(data.amount) : undefined,
+        })
+        .eq("id", id);
+
+      if (updateError) throw updateError;
+      await fetchFundFlows();
+    },
+    [supabase, fetchFundFlows]
+  );
+
   const deleteFundFlow = useCallback(
     async (id: string) => {
-      const { error: deleteError } = await supabase
-        .from("fund_flows")
-        .delete()
-        .eq("id", id);
+      const { error: deleteError } = await supabase.from("fund_flows").delete().eq("id", id);
 
       if (deleteError) throw deleteError;
       await fetchFundFlows();
@@ -75,6 +88,7 @@ export function useFundFlows() {
     loading,
     error,
     createFundFlow,
+    updateFundFlow,
     deleteFundFlow,
     refresh: fetchFundFlows,
   };

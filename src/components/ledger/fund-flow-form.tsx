@@ -3,17 +3,13 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  type FundFlow,
   type FundFlowFormData,
   EXCHANGES,
   FUND_DIRECTIONS,
   EXCHANGE_LABELS,
 } from "@/types/transaction";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,21 +18,31 @@ interface FundFlowFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: FundFlowFormData) => Promise<void>;
+  initialData?: FundFlow | null;
 }
 
-export function FundFlowForm({ open, onOpenChange, onSubmit }: FundFlowFormProps) {
+export function FundFlowForm({ open, onOpenChange, onSubmit, initialData }: FundFlowFormProps) {
   const t = useTranslations("Ledger");
+  const isEditMode = !!initialData;
 
   const now = new Date();
-  const localISOString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const localISOString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(
+    2,
+    "0"
+  )}:${String(now.getMinutes()).padStart(2, "0")}`;
 
   const [formData, setFormData] = useState<FundFlowFormData>({
-    exchange: "binance",
-    direction: "deposit",
-    amount: 0,
-    currency: "USD",
-    notes: "",
-    transacted_at: localISOString,
+    exchange: initialData?.exchange ?? "binance",
+    direction: initialData?.direction ?? "deposit",
+    amount: initialData?.amount ?? 0,
+    currency: initialData?.currency ?? "USD",
+    notes: initialData?.notes ?? "",
+    transacted_at: initialData?.transacted_at
+      ? new Date(initialData.transacted_at).toISOString().slice(0, 16)
+      : localISOString,
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -64,7 +70,7 @@ export function FundFlowForm({ open, onOpenChange, onSubmit }: FundFlowFormProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>{t("addFundFlow")}</DialogTitle>
+          <DialogTitle>{isEditMode ? t("editFundFlow") : t("addFundFlow")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
@@ -83,9 +89,7 @@ export function FundFlowForm({ open, onOpenChange, onSubmit }: FundFlowFormProps
                         : "bg-orange-600 text-white"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, direction: dir }))
-                  }
+                  onClick={() => setFormData((prev) => ({ ...prev, direction: dir }))}
                 >
                   {t(dir)}
                 </button>
@@ -116,9 +120,7 @@ export function FundFlowForm({ open, onOpenChange, onSubmit }: FundFlowFormProps
               <select
                 className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
                 value={formData.currency}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, currency: e.target.value }))
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, currency: e.target.value }))}
               >
                 <option value="USD">USD</option>
                 <option value="CNY">CNY</option>
@@ -171,9 +173,7 @@ export function FundFlowForm({ open, onOpenChange, onSubmit }: FundFlowFormProps
             <Input
               placeholder={t("notesPlaceholder")}
               value={formData.notes ?? ""}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, notes: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
             />
           </div>
 
@@ -193,7 +193,7 @@ export function FundFlowForm({ open, onOpenChange, onSubmit }: FundFlowFormProps
               {t("cancel")}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? t("saving") : t("addFundFlow")}
+              {submitting ? t("saving") : isEditMode ? t("saveChanges") : t("addFundFlow")}
             </Button>
           </div>
         </form>
