@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 
 export interface ApiKey {
@@ -15,7 +15,7 @@ export function useApiKeys() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchKeys = async () => {
+  const fetchKeys = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
@@ -28,7 +28,7 @@ export function useApiKeys() {
     const data = await response.json();
     if (Array.isArray(data)) setKeys(data);
     setLoading(false);
-  };
+  }, [supabase]);
 
   const saveKey = async (exchange: string, apiKey: string, apiSecret: string, label: string) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -51,8 +51,9 @@ export function useApiKeys() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchKeys();
-  }, [supabase]);
+  }, [fetchKeys]);
 
   return { keys, loading, saveKey, refresh: fetchKeys };
 }

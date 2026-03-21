@@ -22,6 +22,12 @@ vi.mock("@supabase/ssr", () => ({
       })),
       insert: vi.fn(() => Promise.resolve({ data: null, error: null })),
     })),
+    channel: vi.fn(() => ({
+      on: vi.fn(() => ({
+        subscribe: vi.fn(),
+      })),
+    })),
+    removeChannel: vi.fn(),
   })),
 }));
 

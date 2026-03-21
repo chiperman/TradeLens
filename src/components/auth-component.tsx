@@ -143,27 +143,27 @@ export function AuthComponent() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <LogIn className="w-4 h-4" />
+        <Button variant="outline" size="sm" className="gap-2 h-9 px-4 rounded-full border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all text-[10px] font-black uppercase tracking-widest">
+          <LogIn className="w-3.5 h-3.5" />
           登录 / 注册
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>加入 TradeLens</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[400px] border-none shadow-2xl rounded-[2rem] p-8 bg-white/95 backdrop-blur-xl">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="text-2xl font-black tracking-tighter text-slate-900">加入 TradeLens</DialogTitle>
+          <DialogDescription className="text-xs font-medium text-slate-400">
             登录以同步您的计算历史和交易所 API 配置。
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="login" className="w-full mt-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">登录</TabsTrigger>
-            <TabsTrigger value="register">注册</TabsTrigger>
+        <Tabs defaultValue="login" className="w-full mt-6">
+          <TabsList className="grid w-full grid-cols-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50">
+            <TabsTrigger value="login" className="text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">登录</TabsTrigger>
+            <TabsTrigger value="register" className="text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">注册</TabsTrigger>
           </TabsList>
-          <TabsContent value="login">
-            <form onSubmit={handleSignIn} className="space-y-4 pt-4">
+          <TabsContent value="login" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <form onSubmit={handleSignIn} className="space-y-5 pt-6">
               <div className="space-y-2">
-                <Label htmlFor="email">邮箱</Label>
+                <Label htmlFor="email" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">邮箱</Label>
                 <Input
                   id="email"
                   type="email"
@@ -171,45 +171,47 @@ export function AuthComponent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="rounded-xl border-slate-200 h-11 focus-visible:ring-blue-500/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">密码</Label>
+                <Label htmlFor="password" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">密码</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="rounded-xl border-slate-200 h-11 focus-visible:ring-blue-500/20"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "登录中..." : "登录"}
+              <Button type="submit" className="w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-slate-200" disabled={loading}>
+                {loading ? "登录中..." : "登录系统"}
               </Button>
-              <div className="relative my-4">
+              <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
+                  <span className="w-full border-t border-slate-100" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">或者通过第三方登录</span>
+                <div className="relative flex justify-center text-[9px] font-black uppercase">
+                  <span className="bg-white px-4 text-slate-300 tracking-widest">Social Login</span>
                 </div>
               </div>
               <Button 
                 type="button" 
                 variant="outline" 
-                className="w-full gap-2" 
+                className="w-full h-11 rounded-xl gap-3 border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all" 
                 onClick={handleGitHubLogin} 
                 disabled={loading}
               >
                 <Github className="w-4 h-4" />
-                GitHub 登录
+                GitHub 账号登录
               </Button>
             </form>
           </TabsContent>
-          <TabsContent value="register">
-            <form onSubmit={handleSignUp} className="space-y-4 pt-4">
+          <TabsContent value="register" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <form onSubmit={handleSignUp} className="space-y-5 pt-6">
               <div className="space-y-2">
-                <Label htmlFor="reg-email">邮箱</Label>
+                <Label htmlFor="reg-email" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">邮箱</Label>
                 <Input
                   id="reg-email"
                   type="email"
@@ -217,38 +219,40 @@ export function AuthComponent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="rounded-xl border-slate-200 h-11 focus-visible:ring-blue-500/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reg-password">密码</Label>
+                <Label htmlFor="reg-password" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">密码</Label>
                 <Input
                   id="reg-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="rounded-xl border-slate-200 h-11 focus-visible:ring-blue-500/20"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "注册中..." : "创建账户"}
+              <Button type="submit" className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-500 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-blue-100" disabled={loading}>
+                {loading ? "注册中..." : "创建新账户"}
               </Button>
-              <div className="relative my-4">
+              <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
+                  <span className="w-full border-t border-slate-100" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">或者通过第三方登录</span>
+                <div className="relative flex justify-center text-[9px] font-black uppercase">
+                  <span className="bg-white px-4 text-slate-300 tracking-widest">Social Registration</span>
                 </div>
               </div>
               <Button 
                 type="button" 
                 variant="outline" 
-                className="w-full gap-2" 
+                className="w-full h-11 rounded-xl gap-3 border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all" 
                 onClick={handleGitHubLogin} 
                 disabled={loading}
               >
                 <Github className="w-4 h-4" />
-                通过 GitHub 注册
+                通过 GitHub 快速注册
               </Button>
             </form>
           </TabsContent>

@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     // 3. 执行同步逻辑 (演示以 BTCUSDT 为例)
     const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]; // 动态化
-    const allTrades: any[] = [];
+    const allTrades: Record<string, unknown>[] = [];
 
     for (const symbol of symbols) {
       const trades = await binanceAuthenticatedFetch<BinanceTrade[]>(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 
 export interface AssetSummary {
@@ -15,7 +15,7 @@ export function useAssets() {
   const [assets, setAssets] = useState<AssetSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchAssets = async () => {
+  const fetchAssets = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("assets_summary")
@@ -26,9 +26,10 @@ export function useAssets() {
       setAssets(data);
     }
     setLoading(false);
-  };
+  }, [supabase]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAssets();
     
     // 监听交易表变更，自动刷新资产汇总
@@ -44,7 +45,7 @@ export function useAssets() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, [fetchAssets, supabase]);
 
   return { assets, loading, refresh: fetchAssets };
 }

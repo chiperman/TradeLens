@@ -152,7 +152,7 @@ export default function CalculatorPage() {
     return (netSell * (1 - fRate)) / qty;
   }, [sellStats.net, quantity, feeRate]);
 
-  const handleSave = async (type: "break_even" | "profit", customData?: any) => {
+  const handleSave = async (type: "break_even" | "profit", customData?: { buyPrice?: number; profit?: number; fees?: number }) => {
     if (!user) {
       alert("请先登录以保存记录");
       return;
@@ -179,15 +179,18 @@ export default function CalculatorPage() {
   };
 
   return (
-    <main className="container mx-auto py-10 px-4 max-w-6xl">
-      <div className="space-y-8">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-white to-white py-10 px-4">
+      <div className="container mx-auto space-y-10 max-w-6xl">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
+          <div className="space-y-1.5">
+            <h1 className="text-5xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
               TradeLens
             </h1>
-            <p className="text-muted-foreground text-sm font-medium">专业波段双场景回购对比计算器</p>
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-[2px] bg-primary/30 rounded-full" />
+              <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em]">Professional Repurchase Analysis</p>
+            </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
@@ -232,7 +235,7 @@ export default function CalculatorPage() {
                             setSymbolInput("");
                           }}
                         >
-                          强制使用 "{symbolInput.toUpperCase()}"
+                          强制使用 &quot;{symbolInput.toUpperCase()}&quot;
                         </Button>
                       </CommandEmpty>
                       <CommandGroup heading="热门资产">
@@ -282,30 +285,30 @@ export default function CalculatorPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Panel: Parameters */}
-          <div className="lg:col-span-4 space-y-6">
-            <Card className="shadow-lg border-primary/5">
-              <CardHeader className="pb-4 text-primary">
+          <div className="lg:col-span-4 space-y-8">
+            <Card className="shadow-2xl shadow-slate-200/50 border-none bg-white/80 backdrop-blur-sm">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                    <TrendingDown className="w-4 h-4 text-red-500" />
+                  <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                    <TrendingDown className="w-3.5 h-3.5 text-red-500" />
                     卖出参数 (本金)
                   </CardTitle>
-                  <span className="text-[10px] font-bold py-0.5 px-2 bg-primary/10 text-primary rounded-md">SELL INFO</span>
+                  <span className="text-[8px] font-black py-0.5 px-2 bg-slate-100 text-slate-500 rounded-full tracking-tighter">SELL PARAMETERS</span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">卖出价格 ({quoteAsset})</Label>
-                  <Input type="number" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} className="font-mono h-9" />
+                  <Label htmlFor="sellPrice" className="text-[10px] font-bold uppercase text-muted-foreground">卖出价格 ({quoteAsset})</Label>
+                  <Input id="sellPrice" type="number" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} className="font-mono h-9" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">卖出数量 ({baseAsset})</Label>
-                  <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="font-mono h-9" />
+                  <Label htmlFor="quantity" className="text-[10px] font-bold uppercase text-muted-foreground">卖出数量 ({baseAsset})</Label>
+                  <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="font-mono h-9" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">手续费率 (%)</Label>
-                    <Input type="number" value={feeRate} onChange={(e) => setFeeRate(e.target.value)} className="font-mono text-center h-9" />
+                    <Label htmlFor="feeRate" className="text-[10px] font-bold uppercase text-muted-foreground">手续费率 (%)</Label>
+                    <Input id="feeRate" type="number" value={feeRate} onChange={(e) => setFeeRate(e.target.value)} className="font-mono text-center h-9" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">实收 {quoteAsset} (含费)</Label>
@@ -317,17 +320,17 @@ export default function CalculatorPage() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg border-green-500/10">
-              <CardHeader className="pb-4 border-l-4 border-green-500 rounded-t-sm">
-                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                  <Save className="w-4 h-4 text-green-500" />
+            <Card className="shadow-2xl shadow-slate-200/50 border-none bg-white/80 backdrop-blur-sm">
+              <CardHeader className="pb-4 border-l-4 border-green-500 bg-green-50/30">
+                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                  <Save className="w-3.5 h-3.5 text-green-500" />
                   成交记录 (Scenario A)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">买入价格 (已成交)</Label>
-                  <Input type="number" value={buyPriceA} onChange={(e) => setBuyPriceA(e.target.value)} className="font-mono border-green-500/20 h-9" />
+                  <Label htmlFor="buyPriceA" className="text-[10px] font-bold uppercase text-muted-foreground">买入价格 (已成交)</Label>
+                  <Input id="buyPriceA" type="number" value={buyPriceA} onChange={(e) => setBuyPriceA(e.target.value)} className="font-mono border-green-500/20 h-9" />
                 </div>
                 <div className="flex items-center space-x-2 pt-1">
                   <Checkbox 
@@ -338,8 +341,9 @@ export default function CalculatorPage() {
                   <Label htmlFor="useManual" className="text-xs font-bold text-muted-foreground cursor-pointer">使用手动买入额</Label>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">买入总花费 ({quoteAsset})</Label>
+                  <Label htmlFor="manualUsdtA" className="text-[10px] font-bold uppercase text-muted-foreground">买入总花费 ({quoteAsset})</Label>
                   <Input 
+                    id="manualUsdtA"
                     type="number" 
                     value={useManualUsdtA ? manualUsdtA : sellStats.net.toFixed(2)} 
                     onChange={(e) => setManualUsdtA(e.target.value)} 
@@ -353,129 +357,148 @@ export default function CalculatorPage() {
 
           {/* Right Panel: Scenarios Comparison */}
           <div className="lg:col-span-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
               {/* Scenario A Card */}
-              <Card className="shadow-xl bg-card border-t-4 border-green-500 h-full flex flex-col">
+              <Card className="shadow-2xl shadow-slate-200/50 border-none bg-white h-full flex flex-col overflow-hidden">
+                <div className="h-1.5 bg-green-500 w-full" />
                 <CardHeader className="pb-6">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
-                      <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2">
+                      <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2 text-slate-800">
                         Scenario A
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-100 text-green-600 rounded">成交统计</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-50 text-green-600 rounded-full border border-green-100">成交统计</span>
                       </h3>
-                      <p className="text-[10px] text-muted-foreground font-bold">HISTORICAL PERFORMANCE</p>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Historical Performance</p>
                     </div>
-                    <ArrowRightLeft className="w-4 h-4 text-muted-foreground/30" />
+                    <div className="p-2 bg-slate-50 rounded-xl">
+                      <ArrowRightLeft className="w-4 h-4 text-slate-300" />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6 flex-1">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter text-slate-400">最终获得币量</p>
-                    <div className="text-3xl font-mono font-black text-foreground">
-                      {scenarioAResult?.netBaseReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-40">{baseAsset}</span>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">最终获得币量</p>
+                    <div className="text-3xl font-mono font-black text-slate-900 tracking-tighter">
+                      {scenarioAResult?.netBaseReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-30 text-slate-400">{baseAsset}</span>
                     </div>
-                    <p className={`text-[11px] font-bold flex items-center gap-1 ${ (scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                    <p className={`text-[11px] font-black flex items-center gap-1.5 ${ (scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
                       {(scenarioAResult?.baseGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                       {(scenarioAResult?.baseGain ?? 0) >= 0 ? "+" : ""}
                       {scenarioAResult?.baseGain.toFixed(8)} {baseAsset}
                     </p>
                   </div>
 
-                  <div className="py-4 border-y border-dashed border-slate-100">
-                    <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase mb-2">
+                  <div className="py-5 border-y border-slate-50">
+                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">
                       <span>手续费明细</span>
-                      <span className="text-primary tracking-tighter">Total Fee ≈ ¥{( (scenarioAResult?.totalFeesQuote || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
+                      <span className="text-slate-900">Total ≈ ¥{( (scenarioAResult?.totalFeesQuote || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                      <div className="bg-muted/30 p-2 rounded-md">
-                        <Label className="text-[8px] uppercase block mb-1 opacity-60">SELL ({quoteAsset})</Label>
-                        {scenarioAResult?.sellFeeQuote.toFixed(2)}
+                    <div className="grid grid-cols-2 gap-3 text-[11px] font-mono">
+                      <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-slate-400">SELL ({quoteAsset})</Label>
+                        <span className="font-bold text-slate-700">{scenarioAResult?.sellFeeQuote.toFixed(2)}</span>
                       </div>
-                      <div className="bg-muted/30 p-2 rounded-md">
-                        <Label className="text-[8px] uppercase block mb-1 opacity-60">BUY ({baseAsset})</Label>
-                        {scenarioAResult?.buyFeeBase.toFixed(6)}
+                      <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-slate-400">BUY ({baseAsset})</Label>
+                        <span className="font-bold text-slate-700">{scenarioAResult?.buyFeeBase.toFixed(6)}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter text-slate-400">回购收益估算 (折合)</p>
-                    <div className={`text-4xl font-mono font-black ${ (scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">回购收益估算 (折合)</p>
+                    <div className={`text-4xl font-mono font-black tracking-tighter ${ (scenarioAResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
                       $ {Math.abs( (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA) ).toFixed(2)}
                     </div>
-                    <p className="text-sm font-bold text-muted-foreground opacity-60">
+                    <p className="text-xs font-black text-slate-300 uppercase tracking-widest">
                       ≈ ¥ { ( (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
                     </p>
                   </div>
                 </CardContent>
-                <CardFooter className="pt-2">
-                  <Button variant="outline" size="sm" className="w-full text-[10px] font-black uppercase tracking-widest gap-2 bg-green-50/50" onClick={() => handleSave("profit", { profit: (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA), fees: scenarioAResult?.totalFeesQuote, buyPrice: parseFloat(buyPriceA) })}>
-                    <Save className="w-3 h-3" /> 保存此成交记录
+                <CardFooter className="pt-2 px-6 pb-6">
+                  <Button variant="outline" size="sm" className="w-full text-[10px] font-black uppercase tracking-[0.2em] gap-2 h-10 rounded-xl hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all" onClick={() => handleSave("profit", { profit: (scenarioAResult?.baseGain ?? 0) * parseFloat(buyPriceA), fees: scenarioAResult?.totalFeesQuote, buyPrice: parseFloat(buyPriceA) })}>
+                    <Save className="w-3.5 h-3.5" /> 保存此成交记录
                   </Button>
                 </CardFooter>
               </Card>
 
               {/* Scenario B Card */}
-              <Card className="shadow-2xl bg-neutral-950 text-white border-t-4 border-blue-500 h-full flex flex-col">
-                <CardHeader className="pb-6">
+              <Card className="shadow-2xl shadow-blue-100/50 border-none bg-gradient-to-br from-blue-50/50 to-white h-full flex flex-col relative overflow-hidden group">
+                <div className="h-1.5 bg-blue-500 w-full" />
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                  <Radio className="w-40 h-40 text-blue-600 rotate-12" />
+                </div>
+                <CardHeader className="pb-6 relative z-10">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
-                      <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2 text-blue-400">
+                      <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2 text-blue-800">
                         Scenario B
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded">实时买入</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded-full border border-blue-100">实时买入</span>
                       </h3>
-                      <p className="text-[10px] text-neutral-500 font-bold">REAL-TIME PREDICTION</p>
+                      <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">Real-time Prediction</p>
                     </div>
-                    <Radio className={`w-4 h-4 ${isConnected ? "text-blue-500 animate-pulse" : "text-neutral-700"}`} />
+                    <div className={`p-2 rounded-xl border-none transition-all ${isConnected ? "bg-green-50" : "bg-slate-50"}`}>
+                      <Radio className={`w-4 h-4 ${isConnected ? "text-green-500 animate-pulse" : "text-slate-300"}`} />
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-6 flex-1">
+                <CardContent className="space-y-6 flex-1 relative z-10">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-tighter text-neutral-400">预测获得币量</p>
-                    <div className="text-3xl font-mono font-black text-blue-400">
-                      {scenarioBResult?.netBaseReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-40 text-blue-400/50">{baseAsset}</span>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">预测获得币量</p>
+                    <div className="text-3xl font-mono font-black text-slate-900 tracking-tighter">
+                      {scenarioBResult?.netBaseReceived.toFixed(8) || "0.00000000"} <span className="text-sm font-bold opacity-30 text-slate-400">{baseAsset}</span>
                     </div>
-                    <p className={`text-[11px] font-bold flex items-center gap-1 ${ (scenarioBResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                    <p className={`text-[11px] font-black flex items-center gap-1.5 ${ (scenarioBResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
                       {(scenarioBResult?.baseGain ?? 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                       {(scenarioBResult?.baseGain ?? 0) >= 0 ? "+" : ""}
                       {scenarioBResult?.baseGain.toFixed(8)} {baseAsset}
                     </p>
                   </div>
 
-                  <div className="py-4 border-y border-neutral-800">
-                    <div className="flex justify-between text-[10px] font-bold text-neutral-500 uppercase mb-2">
-                      <span>预估手续费</span>
-                      <span className="text-orange-400 tracking-tighter text-[9px]">Total ≈ ¥{( (scenarioBResult?.totalFeesQuote || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
+                  <div className="py-5 border-y border-blue-100/30">
+                    <div className="flex justify-between text-[10px] font-black text-blue-400 uppercase mb-3 tracking-widest">
+                      <span>手续费明细 (实时)</span>
+                      <span className="text-blue-600">Total ≈ ¥{( (scenarioBResult?.totalFeesQuote || 0) * (cnyRate || 7.23) ).toFixed(2)}</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                      <div className="bg-neutral-900 p-2 rounded-md border border-neutral-800">
-                        <Label className="text-[8px] text-neutral-600 block mb-1 uppercase">SELL ({quoteAsset})</Label>
-                        {scenarioBResult?.sellFeeQuote.toFixed(2)}
+                    <div className="grid grid-cols-2 gap-3 text-[11px] font-mono">
+                      <div className="bg-blue-50/30 p-3 rounded-xl border border-blue-100/50">
+                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-blue-400">SELL ({quoteAsset})</Label>
+                        <span className="font-bold text-blue-900">{scenarioBResult?.sellFeeQuote.toFixed(2)}</span>
                       </div>
-                      <div className="bg-neutral-900 p-2 rounded-md border border-neutral-800">
-                        <Label className="text-[8px] text-neutral-600 block mb-1 uppercase">BUY ({baseAsset})</Label>
-                        {scenarioBResult?.buyFeeBase.toFixed(6)}
+                      <div className="bg-blue-50/30 p-3 rounded-xl border border-blue-100/50">
+                        <Label className="text-[8px] font-black uppercase block mb-1.5 text-blue-400">BUY ({baseAsset})</Label>
+                        <span className="font-bold text-blue-900">{scenarioBResult?.buyFeeBase.toFixed(6)}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-tighter text-neutral-400">即时盈亏估算</p>
-                    <div className={`text-4xl font-mono font-black ${ (scenarioBResult?.baseGain ?? 0) >= 0 ? "text-blue-400" : "text-red-500"}`}>
+                    <div className="flex justify-between items-end mb-1">
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">当前市价收益 (折合)</p>
+                      <div className="text-right">
+                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest leading-none">Live Price</p>
+                        <p className="text-[10px] font-mono font-black text-blue-500 leading-none mt-1">${livePrice?.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <div className={`text-4xl font-mono font-black tracking-tighter ${ (scenarioBResult?.baseGain ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
                       $ {Math.abs( (scenarioBResult?.baseGain ?? 0) * (livePrice || 0) ).toFixed(2)}
                     </div>
-                    <p className="text-sm font-bold text-neutral-600">
+                    <p className="text-xs font-black text-slate-300 uppercase tracking-widest">
                       ≈ ¥ { ( (scenarioBResult?.baseGain ?? 0) * (livePrice || 0) * (cnyRate || 7.23) ).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
                     </p>
                   </div>
                 </CardContent>
-                <CardFooter className="pt-2 border-t border-neutral-800">
-                  <div className="w-full flex justify-between items-center text-[10px] font-bold">
-                    <span className="text-neutral-500 uppercase">保本回购价:</span>
-                    <span className="text-red-400 font-black font-mono tracking-tighter text-xs">
+                <CardFooter className="pt-2 px-6 pb-6 relative z-10 flex flex-col gap-4">
+                  <div className="w-full h-px bg-blue-100/50" />
+                  <div className="w-full flex justify-between items-center text-[10px] font-black">
+                    <span className="text-slate-400 uppercase tracking-widest">保本回购价:</span>
+                    <span className="text-red-500 font-mono tracking-tighter text-sm">
                       ${breakEvenB.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                   </div>
+                  <Button variant="ghost" size="sm" className="w-full text-[10px] font-black uppercase tracking-[0.2em] gap-2 h-10 rounded-xl bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 transition-all border border-blue-100" onClick={() => handleSave("profit", { profit: (scenarioBResult?.baseGain ?? 0) * (livePrice || 0), fees: scenarioBResult?.totalFeesQuote, buyPrice: livePrice ?? undefined })}>
+                    <Save className="w-3.5 h-3.5" /> 保存实时成交记录
+                  </Button>
                 </CardFooter>
               </Card>
             </div>
@@ -483,9 +506,9 @@ export default function CalculatorPage() {
         </div>
 
         {/* Secondary Section: History & Assets */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-6">
           <Tabs defaultValue="history" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6 bg-muted/50 p-1 rounded-xl">
+            <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100/50 p-1 rounded-2xl border border-slate-200/50">
               <TabsTrigger value="history" className="text-xs font-bold uppercase tracking-widest rounded-lg">历史账本</TabsTrigger>
               <TabsTrigger value="assets" className="text-xs font-bold uppercase tracking-widest rounded-lg">持仓概览</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs font-bold uppercase tracking-widest gap-2 rounded-lg">
@@ -500,11 +523,13 @@ export default function CalculatorPage() {
 
             <TabsContent value="history" className="mt-0">
               <Card className="border-none shadow-none bg-transparent">
-                <CardHeader className="px-0 pt-0 pb-4">
+                <CardHeader className="px-0 pt-0 pb-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <History className="w-4 h-4 text-primary" />
-                      <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Recent Calculations</CardTitle>
+                      <div className="p-2 bg-primary/5 rounded-lg border border-primary/10">
+                        <History className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recent Calculations</CardTitle>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="ghost" size="sm" onClick={exportToExcel} className="h-6 px-2 text-[9px] font-bold uppercase">Excel</Button>
@@ -515,19 +540,20 @@ export default function CalculatorPage() {
                 <CardContent className="px-0 space-y-3">
                   {history.length > 0 ? (
                     history.map((item, idx) => (
-                      <div key={idx} className="group relative flex justify-between items-center p-3 rounded-xl bg-muted/30 border border-transparent hover:border-primary/20 hover:bg-background transition-all shadow-sm">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-mono text-sm font-black tracking-tighter">
-                            {(item.buy_price || 0).toLocaleString()} <span className="text-muted-foreground/30 mx-1">→</span> {(item.sell_price || 0).toLocaleString()}
+                      <div key={idx} className="group relative flex justify-between items-center p-4 rounded-2xl bg-white border border-slate-100 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-mono text-sm font-black tracking-tighter text-slate-700">
+                            {(item.buy_price || 0).toLocaleString()} <span className="text-slate-300 mx-2 font-light">→</span> {(item.sell_price || 0).toLocaleString()}
                           </span>
-                          <span className="text-[9px] font-bold text-muted-foreground uppercase opacity-50">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <Activity className="w-3 h-3 opacity-40" />
                             {new Date(item.created_at!).toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <p className={`font-mono text-sm font-black ${ (item.profit || 0) >= 0 ? "text-green-500" : "text-muted-foreground"}`}>
-                              {(item.profit || 0).toFixed(2)} <span className="text-[10px] opacity-40">USDT</span>
+                            <p className={`font-mono text-sm font-black ${ (item.profit || 0) >= 0 ? "text-green-500" : "text-slate-400"}`}>
+                              {(item.profit || 0).toFixed(2)} <span className="text-[10px] opacity-30">USDT</span>
                             </p>
                           </div>
                           {user && (
@@ -554,25 +580,42 @@ export default function CalculatorPage() {
 
             <TabsContent value="assets" className="mt-0">
                <Card className="border-none shadow-none bg-transparent">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {isAssetsLoading ? (
-                      <div className="col-span-full py-12 text-center text-xs text-muted-foreground font-black uppercase">Loading Portfolio...</div>
+                      <div className="col-span-full py-20 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                        <RefreshCw className="w-5 h-5 mx-auto mb-4 animate-spin opacity-20" />
+                        Loading Portfolio...
+                      </div>
                     ) : assets.length > 0 ? (
                       assets.map((asset) => (
-                        <div key={asset.base_asset} className="bg-background border border-muted p-4 rounded-2xl shadow-sm hover:border-primary/20 transition-colors">
-                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">{asset.base_asset}</p>
-                          <p className="text-xl font-mono font-black mt-1 leading-none">
+                        <div key={asset.base_asset} className="group relative bg-white border border-slate-100 p-5 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:border-primary/20 transition-all duration-300">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="p-2 bg-primary/5 rounded-lg border border-primary/10 group-hover:bg-primary group-hover:text-white transition-colors">
+                              <Coins className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-full">{asset.base_asset}</span>
+                          </div>
+                          <p className="text-2xl font-mono font-black text-slate-900 leading-none tracking-tighter">
                             {asset.total_quantity.toLocaleString(undefined, { maximumFractionDigits: 6 })}
                           </p>
-                          <div className="flex justify-between items-center mt-3 pt-3 border-t border-muted/50">
-                            <span className="text-[9px] font-bold text-muted-foreground uppercase">Avg Price</span>
-                            <span className="text-[10px] font-mono font-bold">${asset.average_price.toFixed(2)}</span>
+                          <div className="mt-5 pt-4 border-t border-slate-50 flex flex-col gap-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Avg Cost</span>
+                              <span className="text-[10px] font-mono font-bold text-slate-600">${asset.average_price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Value</span>
+                              <span className="text-[10px] font-mono font-black text-blue-600">${ (asset.total_quantity * asset.average_price).toLocaleString(undefined, { minimumFractionDigits: 2 }) }</span>
+                            </div>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="col-span-full py-12 text-center text-xs text-muted-foreground border-2 border-dashed rounded-3xl font-black uppercase tracking-widest">
-                        Portfolio Empty
+                      <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-[2.5rem]">
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 leading-loose">
+                          Portfolio Empty<br/>
+                          <span className="opacity-50">Start calculating to see assets</span>
+                        </p>
                       </div>
                     )}
                   </div>
@@ -580,8 +623,8 @@ export default function CalculatorPage() {
             </TabsContent>
           </Tabs>
 
-          <footer className="lg:col-span-2 text-center py-12 text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em] opacity-40 border-t border-muted mt-8">
-            TradeLens Dashboard v0.2 Professional - Powered by Antigravity
+          <footer className="lg:col-span-2 text-center py-16 text-[9px] font-black text-slate-300 uppercase tracking-[0.5em] border-t border-slate-100 mt-12 bg-white/50 rounded-b-3xl">
+            TradeLens Dashboard v0.2 Professional - Powered by Antigravity AI
           </footer>
         </div>
       </div>

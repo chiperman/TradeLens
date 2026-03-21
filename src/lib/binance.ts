@@ -43,7 +43,7 @@ export async function binanceAuthenticatedFetch<T>(
   const queryParams = new URLSearchParams({
     ...params,
     timestamp: timestamp.toString(),
-  } as any);
+  } as Record<string, string>);
 
   const signature = generateSignature(queryParams.toString(), apiSecret);
   queryParams.append("signature", signature);
