@@ -34,7 +34,7 @@ describe("CalculatorPage UI", () => {
   it("当输入卖出参数时，应当实时更新保本回购价", async () => {
     render(<CalculatorPage />);
 
-    const sellPriceInput = screen.getByLabelText(/卖出价格/i);
+    const sellPriceInput = screen.getByLabelText(/Calculator\.sellPrice/i);
     fireEvent.change(sellPriceInput, { target: { value: "50000" } });
 
     // 逻辑：卖出所得 50000 * 0.999 = 49950
@@ -47,17 +47,17 @@ describe("CalculatorPage UI", () => {
   it("应当正确渲染两个场景的卡片", () => {
     render(<CalculatorPage />);
     
-    // 验证场景卡片标题是否正确渲染 (因为有多个匹配项，使用 getAll 并检查长度)
-    expect(screen.getAllByText(/Scenario A/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/Scenario B/i).length).toBeGreaterThanOrEqual(1);
+    // 验证场景卡片标题是否正确渲染
+    expect(screen.getByText(/Calculator\.labelA/i)).toBeDefined();
+    expect(screen.getByText(/Calculator\.labelB/i)).toBeDefined();
   });
 
   it("应当正确渲染底部的功能标签页", () => {
     render(<CalculatorPage />);
 
     // 验证底部 Tabs Trigger 是否正确渲染
-    expect(screen.getByRole("tab", { name: /历史账本/i })).toBeDefined();
-    expect(screen.getByRole("tab", { name: /持仓概览/i })).toBeDefined();
-    expect(screen.getByRole("tab", { name: /智能分析/i })).toBeDefined();
+    expect(screen.getByRole("tab", { name: /History\.title/i })).toBeDefined();
+    expect(screen.getByRole("tab", { name: /Assets\.title/i })).toBeDefined();
+    expect(screen.getByRole("tab", { name: /Calculator\.smartAnalytics/i })).toBeDefined();
   });
 });

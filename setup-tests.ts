@@ -31,6 +31,45 @@ vi.mock("@supabase/ssr", () => ({
   })),
 }));
 
+// Mock next-intl
+vi.mock("next-intl", () => ({
+  useTranslations: (ns: string) => (key: string) => ns ? `${ns}.${key}` : key,
+  useLocale: () => "zh",
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Mock next-themes
+vi.mock("next-themes", () => ({
+  useTheme: () => ({
+    theme: "light",
+    setTheme: vi.fn(),
+  }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Mock next/navigation
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({ locale: "zh" }),
+}));
+
+// Mock custom i18n routing
+vi.mock("@/i18n/routing", () => ({
+  usePathname: () => "/",
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => children,
+}));
+
 // Mock 浏览器 API
 Object.defineProperty(window, "localStorage", {
   value: {
