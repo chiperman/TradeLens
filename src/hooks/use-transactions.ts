@@ -36,9 +36,7 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     setError(null);
 
     try {
-      let query = supabase
-        .from("transactions")
-        .select("*", { count: "exact" });
+      let query = supabase.from("transactions").select("*", { count: "exact" });
 
       // 应用筛选
       if (filter.asset_class) {
@@ -122,6 +120,37 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     [supabase, fetchTransactions]
   );
 
+  const bulkCreateTransactions = useCallback(
+    async (txs: TransactionFormData[]) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error("Not authenticated");
+
+      const insertData = txs.map((data) => ({
+        user_id: user.user!.id,
+        symbol: data.symbol,
+        asset_name: data.asset_name || null,
+        asset_class: data.asset_class,
+        market: data.market || null,
+        exchange: data.exchange,
+        side: data.side,
+        price: data.price,
+        quantity: data.quantity,
+        quote_quantity: data.price * data.quantity,
+        commission: data.commission ?? 0,
+        commission_currency: data.commission_currency ?? "USD",
+        source: "import",
+        notes: data.notes || null,
+        transacted_at: data.transacted_at,
+      }));
+
+      const { error: insertError } = await supabase.from("transactions").insert(insertData);
+
+      if (insertError) throw insertError;
+      await fetchTransactions();
+    },
+    [supabase, fetchTransactions]
+  );
+
   const updateTransaction = useCallback(
     async (id: string, data: Partial<TransactionFormData>) => {
       const updateData: Record<string, unknown> = { ...data };
@@ -142,10 +171,7 @@ export function useTransactions(initialFilter?: TransactionFilter) {
 
   const deleteTransaction = useCallback(
     async (id: string) => {
-      const { error: deleteError } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", id);
+      const { error: deleteError } = await supabase.from("transactions").delete().eq("id", id);
 
       if (deleteError) throw deleteError;
       await fetchTransactions();
@@ -164,6 +190,7 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     setSort,
     setPagination,
     createTransaction,
+    bulkCreateTransactions,
     updateTransaction,
     deleteTransaction,
     refresh: fetchTransactions,
