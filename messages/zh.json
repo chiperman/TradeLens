@@ -165,6 +165,40 @@
     "totalRecords": "共 {count} 条记录",
     "page": "第 {current} / {total} 页"
   },
+  "Analytics": {
+    "totalPnl": "总已实现 P&L",
+    "totalReturn": "总收益率",
+    "winRate": "胜率",
+    "plRatio": "盈亏比",
+    "maxDrawdown": "最大回撤",
+    "sharpeRatio": "夏普比率",
+    "totalDeposits": "总入金",
+    "tradeCount": "交易总数",
+    "cumulativePnl": "累计盈亏曲线",
+    "assetAllocation": "资产配置权重",
+    "monthlyReturns": "月度收益",
+    "benchmarkComparison": "收益率对比 (vs S&P 500)",
+    "noData": "暂无数据",
+    "timeframes": {
+      "1W": "1周",
+      "1M": "1月",
+      "3M": "3月",
+      "6M": "半年",
+      "YTD": "今年",
+      "1Y": "1年",
+      "ALL": "全部"
+    }
+  },
+  "Portfolio": {
+    "symbol": "标的",
+    "quantity": "数量",
+    "avgCost": "持仓均价",
+    "exchange": "交易所",
+    "totalCost": "总成本",
+    "noPositions": "暂无 {market} 持仓",
+    "crypto": "Crypto",
+    "stock": "Stock"
+  },
   "Settings": {
     "feeSettings": "手续费设置",
     "feeSettingsDesc": "配置不同资产类别的默认手续费模型",

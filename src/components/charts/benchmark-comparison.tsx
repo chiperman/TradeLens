@@ -57,7 +57,11 @@ export function BenchmarkComparisonChart({ data, height = 280 }: BenchmarkCompar
                   fontSize: "12px",
                   fontWeight: 500,
                 }}
-                formatter={(value: number) => [`${(value * 100).toFixed(2)}%`]}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(val: any) => {
+                  const num = Number(val);
+                  return !isNaN(num) ? [`${(num * 100).toFixed(2)}%`] : [val];
+                }}
               />
               <Legend
                 verticalAlign="bottom"

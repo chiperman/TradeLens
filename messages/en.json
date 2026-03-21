@@ -165,6 +165,40 @@
     "totalRecords": "{count} records total",
     "page": "Page {current} of {total}"
   },
+  "Analytics": {
+    "totalPnl": "Total P&L",
+    "totalReturn": "Total Return",
+    "winRate": "Win Rate",
+    "plRatio": "P/L Ratio",
+    "maxDrawdown": "Max Drawdown",
+    "sharpeRatio": "Sharpe Ratio",
+    "totalDeposits": "Total Deposits",
+    "tradeCount": "Total Trades",
+    "cumulativePnl": "Cumulative P&L Curve",
+    "assetAllocation": "Asset Allocation",
+    "monthlyReturns": "Monthly Returns",
+    "benchmarkComparison": "Benchmark vs S&P 500",
+    "noData": "No data available",
+    "timeframes": {
+      "1W": "1W",
+      "1M": "1M",
+      "3M": "3M",
+      "6M": "6M",
+      "YTD": "YTD",
+      "1Y": "1Y",
+      "ALL": "ALL"
+    }
+  },
+  "Portfolio": {
+    "symbol": "Symbol",
+    "quantity": "Quantity",
+    "avgCost": "Avg Cost",
+    "exchange": "Exchange",
+    "totalCost": "Total Cost",
+    "noPositions": "No {market} positions",
+    "crypto": "Crypto",
+    "stock": "Stock"
+  },
   "Settings": {
     "feeSettings": "Fee Settings",
     "feeSettingsDesc": "Configure default fee models for different asset classes",
