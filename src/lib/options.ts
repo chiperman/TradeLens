@@ -23,7 +23,14 @@ export interface OptionPosition {
 
 export type OptionInsertParams = Omit<
   OptionPosition,
-  "id" | "user_id" | "status" | "close_premium" | "closed_at" | "created_at" | "updated_at"
+  | "id"
+  | "user_id"
+  | "status"
+  | "close_premium"
+  | "closed_at"
+  | "created_at"
+  | "updated_at"
+  | "opened_at"
 >;
 
 export type OptionUpdateParams = Partial<

@@ -12,18 +12,14 @@ import {
   BookOpen,
   BarChart3,
   Settings,
+  Layers,
   ChevronsLeft,
   ChevronsRight,
   LogOut,
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "/", icon: LayoutDashboard },
@@ -31,6 +27,7 @@ const NAV_ITEMS = [
   { key: "calculator", href: "/calculator", icon: Calculator },
   { key: "ledger", href: "/ledger", icon: BookOpen },
   { key: "analytics", href: "/analytics", icon: BarChart3 },
+  { key: "options", href: "/options", icon: Layers },
   { key: "settings", href: "/settings", icon: Settings },
 ] as const;
 

@@ -4,13 +4,7 @@ import { usePathname } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Briefcase,
-  Calculator,
-  BookOpen,
-  BarChart3,
-} from "lucide-react";
+import { LayoutDashboard, Briefcase, Calculator, BookOpen, BarChart3, Layers } from "lucide-react";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "/", icon: LayoutDashboard },
@@ -18,6 +12,7 @@ const NAV_ITEMS = [
   { key: "calculator", href: "/calculator", icon: Calculator },
   { key: "ledger", href: "/ledger", icon: BookOpen },
   { key: "analytics", href: "/analytics", icon: BarChart3 },
+  { key: "options", href: "/options", icon: Layers },
 ] as const;
 
 export function MobileNav() {
@@ -47,9 +42,7 @@ export function MobileNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 flex-1 py-1 rounded-lg transition-colors",
-                active
-                  ? "text-primary"
-                  : "text-muted-foreground"
+                active ? "text-primary" : "text-muted-foreground"
               )}
             >
               <Icon className={cn("w-5 h-5", active && "text-primary")} />
