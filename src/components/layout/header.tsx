@@ -5,7 +5,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import LanguageSwitcher from "@/components/language-switcher";
 
 export function Header() {
-  const t = useTranslations("Common");
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-14 px-6 border-b border-border bg-background/80 backdrop-blur-sm">
