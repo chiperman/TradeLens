@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
-import * as XLSX from "xlsx";
+import * as ExcelJS from "exceljs";
 
 export interface Calculation {
   id?: string;
@@ -26,7 +26,9 @@ export function useTradeHistory() {
   const fetchHistory = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         setHistory([]);
         return;
@@ -50,7 +52,9 @@ export function useTradeHistory() {
 
   // 获取所有记录用于导出
   const fetchAllHistory = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return [];
 
     const { data, error } = await supabase
@@ -68,10 +72,29 @@ export function useTradeHistory() {
       return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(allData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "TradeHistory");
-    XLSX.writeFile(workbook, `TradeLens_History_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("TradeHistory");
+
+    // Add headers based on keys in the first object
+    const keys = Object.keys(allData[0]) as (keyof Calculation)[];
+    worksheet.columns = keys.map((key) => ({ header: key, key, width: 20 }));
+
+    allData.forEach((row) => {
+      worksheet.addRow(row);
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `TradeLens_History_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const exportToJSON = async () => {
@@ -81,10 +104,14 @@ export function useTradeHistory() {
       return;
     }
 
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData, null, 2));
+    const dataStr =
+      "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData, null, 2));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `TradeLens_Backup_${new Date().toISOString().slice(0, 10)}.json`);
+    downloadAnchorNode.setAttribute(
+      "download",
+      `TradeLens_Backup_${new Date().toISOString().slice(0, 10)}.json`
+    );
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -92,7 +119,9 @@ export function useTradeHistory() {
 
   // 保存一条新记录
   const saveCalculation = async (calc: Calculation) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return { error: "请先登录" };
 
     const { error } = await supabase.from("calculations").insert([{ ...calc, user_id: user.id }]);
@@ -102,7 +131,9 @@ export function useTradeHistory() {
 
   // 删除一条记录
   const deleteCalculation = async (id: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return { error: "请先登录" };
 
     const { error } = await supabase.from("calculations").delete().eq("id", id);
@@ -114,13 +145,13 @@ export function useTradeHistory() {
     fetchHistory();
   }, [fetchHistory]);
 
-  return { 
-    history, 
-    isLoading, 
-    saveCalculation, 
+  return {
+    history,
+    isLoading,
+    saveCalculation,
     deleteCalculation,
     refreshHistory: fetchHistory,
     exportToExcel,
-    exportToJSON 
+    exportToJSON,
   };
 }

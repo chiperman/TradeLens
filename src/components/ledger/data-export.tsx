@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, FileSpreadsheet, FileJson, FileText } from "lucide-react";
-import * as XLSX from "xlsx";
+import * as ExcelJS from "exceljs";
 
 interface DataExportProps {
   transactions: Transaction[];
@@ -53,11 +53,7 @@ export function DataExport({ transactions, fundFlows }: DataExportProps) {
     const csv = [headers, ...rows]
       .map((row) =>
         row
-          .map((cell) =>
-            typeof cell === "string" && cell.includes(",")
-              ? `"${cell}"`
-              : cell
-          )
+          .map((cell) => (typeof cell === "string" && cell.includes(",") ? `"${cell}"` : cell))
           .join(",")
       )
       .join("\n");
@@ -65,46 +61,82 @@ export function DataExport({ transactions, fundFlows }: DataExportProps) {
     downloadFile(csv, "tradelens-transactions.csv", "text/csv");
   };
 
-  const exportExcel = () => {
-    const txData = transactions.map((tx) => ({
-      Date: new Date(tx.transacted_at).toISOString(),
-      Symbol: tx.symbol,
-      "Asset Name": tx.asset_name ?? "",
-      "Asset Class": tx.asset_class,
-      Side: tx.side,
-      Price: tx.price,
-      Quantity: tx.quantity,
-      Total: tx.quote_quantity,
-      Commission: tx.commission,
-      Exchange: tx.exchange,
-      Source: tx.source,
-      Notes: tx.notes ?? "",
-    }));
+  const exportExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
 
-    const ffData = fundFlows.map((ff) => ({
-      Date: new Date(ff.transacted_at).toISOString(),
-      Direction: ff.direction,
-      Amount: ff.amount,
-      Currency: ff.currency,
-      Exchange: ff.exchange,
-      Notes: ff.notes ?? "",
-    }));
+    // Transactions Sheet
+    const txSheet = workbook.addWorksheet("Transactions");
+    txSheet.columns = [
+      { header: "Date", key: "date", width: 25 },
+      { header: "Symbol", key: "symbol", width: 15 },
+      { header: "Asset Name", key: "asset_name", width: 20 },
+      { header: "Asset Class", key: "asset_class", width: 15 },
+      { header: "Side", key: "side", width: 10 },
+      { header: "Price", key: "price", width: 15 },
+      { header: "Quantity", key: "quantity", width: 15 },
+      { header: "Total", key: "total", width: 15 },
+      { header: "Commission", key: "commission", width: 15 },
+      { header: "Exchange", key: "exchange", width: 15 },
+      { header: "Source", key: "source", width: 15 },
+      { header: "Notes", key: "notes", width: 30 },
+    ];
 
-    const wb = XLSX.utils.book_new();
-    const ws1 = XLSX.utils.json_to_sheet(txData);
-    const ws2 = XLSX.utils.json_to_sheet(ffData);
-    XLSX.utils.book_append_sheet(wb, ws1, "Transactions");
-    XLSX.utils.book_append_sheet(wb, ws2, "Fund Flows");
-    XLSX.writeFile(wb, "tradelens-export.xlsx");
+    transactions.forEach((tx) => {
+      txSheet.addRow({
+        date: new Date(tx.transacted_at).toISOString(),
+        symbol: tx.symbol,
+        asset_name: tx.asset_name ?? "",
+        asset_class: tx.asset_class,
+        side: tx.side,
+        price: tx.price,
+        quantity: tx.quantity,
+        total: tx.quote_quantity,
+        commission: tx.commission,
+        exchange: tx.exchange,
+        source: tx.source,
+        notes: tx.notes ?? "",
+      });
+    });
+
+    // Fund Flows Sheet
+    const ffSheet = workbook.addWorksheet("Fund Flows");
+    ffSheet.columns = [
+      { header: "Date", key: "date", width: 25 },
+      { header: "Direction", key: "direction", width: 15 },
+      { header: "Amount", key: "amount", width: 15 },
+      { header: "Currency", key: "currency", width: 15 },
+      { header: "Exchange", key: "exchange", width: 15 },
+      { header: "Notes", key: "notes", width: 30 },
+    ];
+
+    fundFlows.forEach((ff) => {
+      ffSheet.addRow({
+        date: new Date(ff.transacted_at).toISOString(),
+        direction: ff.direction,
+        amount: ff.amount,
+        currency: ff.currency,
+        exchange: ff.exchange,
+        notes: ff.notes ?? "",
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tradelens-export.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const exportJSON = () => {
     const data = { transactions, fundFlows, exportedAt: new Date().toISOString() };
-    downloadFile(
-      JSON.stringify(data, null, 2),
-      "tradelens-backup.json",
-      "application/json"
-    );
+    downloadFile(JSON.stringify(data, null, 2), "tradelens-backup.json", "application/json");
   };
 
   const downloadFile = (content: string, filename: string, mimeType: string) => {
