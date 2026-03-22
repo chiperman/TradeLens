@@ -23,6 +23,12 @@ export function useNotificationLogs() {
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
 
+  // 使用 useRef 记录当前页码，用于在稳定的 refresh 函数中进行逻辑判断，避免循环依赖
+  const pageRef = useRef(page);
+  useEffect(() => {
+    pageRef.current = page;
+  }, [page]);
+
   const fetchLogs = useCallback(async (targetPage: number, silent: boolean = false) => {
     if (!silent) setLoading(true);
     setError(null);
@@ -59,7 +65,7 @@ export function useNotificationLogs() {
     fetchLogs(page);
   }, [page, fetchLogs]);
 
-  const clearLogs = async () => {
+  const clearLogs = useCallback(async () => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
@@ -76,15 +82,15 @@ export function useNotificationLogs() {
     } catch (err) {
       throw err instanceof Error ? err : new Error("Failed to clear logs");
     }
-  };
+  }, []);
 
-  const refresh = async () => {
-    if (page === 0) {
+  const refresh = useCallback(async () => {
+    if (pageRef.current === 0) {
       await fetchLogs(0, true);
     } else {
       setPage(0);
     }
-  };
+  }, [fetchLogs]);
 
   return {
     logs,
