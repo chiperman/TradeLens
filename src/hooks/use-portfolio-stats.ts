@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useFundFlows } from "@/hooks/use-fund-flows";
+import { useNotificationConfig } from "@/hooks/use-notification-config";
 import { simpleReturn, maxDrawdown, sharpeRatio, winRate, profitLossRatio } from "@/lib/returns";
 import type { ClosedTrade } from "@/lib/returns";
 
@@ -49,6 +50,8 @@ export function usePortfolioStats(): {
 
   const [asyncStats, setAsyncStats] = useState({ irr: 0, twr: 0 });
   const workerRef = useRef<Worker | null>(null);
+  const lastNotifiedValue = useRef<number | null>(null);
+  const { config: notifyConfig } = useNotificationConfig();
 
   useEffect(() => {
     // Initialize Web Worker
@@ -224,6 +227,43 @@ export function usePortfolioStats(): {
       },
     });
   }, [fundFlows, stats.totalDeposits, stats.totalWithdrawals, stats.totalPnl, stats.totalCost]);
+
+  // 推送逻辑：当组合价值变动超过阈值时发送通知
+  useEffect(() => {
+    if (!notifyConfig || !notifyConfig.is_enabled || txLoading || ffLoading) return;
+
+    const currentPortValue = stats.totalDeposits - stats.totalWithdrawals + stats.totalPnl;
+
+    // 初始化或第一次获取到值
+    if (lastNotifiedValue.current === null) {
+      lastNotifiedValue.current = currentPortValue;
+      return;
+    }
+
+    const diff = Math.abs(currentPortValue - lastNotifiedValue.current);
+    const percentChange = (diff / (Math.abs(lastNotifiedValue.current) || 1)) * 100;
+
+    if (percentChange >= notifyConfig.alert_threshold_percent) {
+      const isUp = currentPortValue > lastNotifiedValue.current;
+      const title = isUp ? "📈 投资组合上涨提醒" : "📉 投资组合下跌提醒";
+      const body = `组合总估值变动了 ${percentChange.toFixed(2)}%。当前估值：$${currentPortValue.toFixed(2)}`;
+
+      // 调用 API 发送推送
+      fetch("/api/notifications/notify", {
+        method: "POST",
+        body: JSON.stringify({ title, body }),
+      }).catch((err) => console.error("Failed to trigger automated notification:", err));
+
+      lastNotifiedValue.current = currentPortValue;
+    }
+  }, [
+    stats.totalPnl,
+    stats.totalDeposits,
+    stats.totalWithdrawals,
+    notifyConfig,
+    txLoading,
+    ffLoading,
+  ]);
 
   return { stats, loading: txLoading || ffLoading };
 }

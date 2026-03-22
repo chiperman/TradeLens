@@ -2,14 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useNotificationLogs } from "@/hooks/use-notification-logs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, CheckCircle2, XCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";

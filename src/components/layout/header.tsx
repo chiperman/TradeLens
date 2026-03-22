@@ -1,6 +1,5 @@
 "use client";
 
-import { useLocale } from "next-intl";
 import { ThemeToggle } from "@/components/theme-toggle";
 import LanguageSwitcher from "@/components/language-switcher";
 

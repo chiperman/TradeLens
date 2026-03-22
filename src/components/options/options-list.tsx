@@ -1,7 +1,7 @@
 "use client";
 
 import { useOptions } from "@/hooks/use-options";
-import type { OptionPosition, OptionStatus } from "@/lib/options";
+import type { OptionStatus } from "@/lib/options";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, CircleDashed, XOctagon, ArrowRightCircle, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";

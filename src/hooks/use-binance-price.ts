@@ -32,7 +32,7 @@ export function useBinancePrice(symbol: string = "BTCUSDT") {
           if (data.p) {
             setPrice(parseFloat(data.p));
           }
-        } catch (_err) {
+        } catch {
           setError("解析行情数据失败");
         }
       };

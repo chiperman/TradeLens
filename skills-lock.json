@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "git-commit": {
+      "source": "chiperman/agent-skills",
+      "sourceType": "github",
+      "computedHash": "3106e0d1576718489db4b4304d28aead5d27b72c729ffe68550a361290f862d8"
+    }
+  }
+}

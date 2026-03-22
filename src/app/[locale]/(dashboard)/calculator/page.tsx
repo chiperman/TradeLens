@@ -36,7 +36,6 @@ import {
   Radio,
   Save,
   History,
-  User as UserIcon,
   Coins,
   Activity,
   Trash2,
@@ -45,7 +44,6 @@ import {
   ArrowRightLeft,
   Check,
   ChevronsUpDown,
-  Search,
   Layers,
 } from "lucide-react";
 import { AuthComponent } from "@/components/auth-component";
@@ -72,7 +70,6 @@ const popularSymbols = [
 ];
 
 export default function CalculatorPage() {
-  const t = useTranslations();
   const tCommon = useTranslations("Common");
   const tCalc = useTranslations("Calculator");
   const tHistory = useTranslations("History");
@@ -108,7 +105,7 @@ export default function CalculatorPage() {
   const { price: livePrice, isConnected } = useBinancePrice(symbol);
 
   // Exchange Rate Hook
-  const { rate: cnyRate, isLoading: isRateLoading } = useExchangeRate();
+  const { rate: cnyRate } = useExchangeRate();
 
   // Asset Class & Settings
   const [assetClass, setAssetClass] = useLocalStorage<AssetClass>(

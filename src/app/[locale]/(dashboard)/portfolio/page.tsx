@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useTransactions } from "@/hooks/use-transactions";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Briefcase, Coins, LayoutList } from "lucide-react";
 
 export default function PortfolioPage() {

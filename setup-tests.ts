@@ -33,7 +33,7 @@ vi.mock("@supabase/ssr", () => ({
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
-  useTranslations: (ns: string) => (key: string) => ns ? `${ns}.${key}` : key,
+  useTranslations: (ns: string) => (key: string) => (ns ? `${ns}.${key}` : key),
   useLocale: () => "zh",
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
@@ -67,7 +67,7 @@ vi.mock("@/i18n/routing", () => ({
     replace: vi.fn(),
     prefetch: vi.fn(),
   }),
-  Link: ({ children, href }: { children: React.ReactNode; href: string }) => children,
+  Link: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 // Mock 浏览器 API
