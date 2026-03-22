@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { calculateAccumulation, calculateBreakEven, calculateNetProfit } from "@/lib/calculator";
+import {
+  calculateAccumulation,
+  calculateBreakEven,
+  calculateNetProfit,
+  calculateFeeAmount,
+} from "@/lib/calculator";
+import { type AssetClass, type FeeModel } from "@/types/transaction";
+import { useSettings } from "@/hooks/use-settings";
 import { useBinancePrice } from "@/hooks/use-binance-price";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTradeHistory } from "@/hooks/use-trade-history";
@@ -103,8 +110,19 @@ export default function CalculatorPage() {
   // Exchange Rate Hook
   const { rate: cnyRate, isLoading: isRateLoading } = useExchangeRate();
 
-  // LocalStorage Persisted State for Fees
-  const [feeRate, setFeeRate] = useLocalStorage<string>("tradelens_global_fee", "0.1");
+  // Asset Class & Settings
+  const [assetClass, setAssetClass] = useLocalStorage<AssetClass>(
+    "tradelens_calculator_asset",
+    "crypto"
+  );
+  const { settings } = useSettings();
+
+  const activeFeeModel = useMemo<FeeModel>(() => {
+    if (settings?.fee_config?.[assetClass]) return settings.fee_config[assetClass];
+    return assetClass === "crypto"
+      ? { type: "percentage", rate: 0.001, currency: "USDT" }
+      : { type: "per_share", rate: 0.005, min: 1.0, currency: "USD" };
+  }, [settings, assetClass]);
 
   // Core Input States
   const [sellPrice, setSellPrice] = useState<string>("70000");
@@ -114,6 +132,33 @@ export default function CalculatorPage() {
   const [buyPriceA, setBuyPriceA] = useState<string>("69000");
   const [useManualUsdtA, setUseManualUsdtA] = useState<boolean>(false);
   const [manualUsdtA, setManualUsdtA] = useState<string>("7000");
+
+  // Matrix Target Prices
+  const [matrixTargetsStr, setMatrixTargetsStr] = useState<string>("70000, 75000, 80000");
+
+  const matrixResults = useMemo(() => {
+    const targets = matrixTargetsStr
+      .split(",")
+      .map((s) => parseFloat(s.trim()))
+      .filter((n) => !isNaN(n));
+    const qty = parseFloat(quantity);
+    const bPrice = parseFloat(buyPriceA);
+    if (isNaN(qty) || isNaN(bPrice) || targets.length === 0) return [];
+
+    return targets.map((tPrice) => {
+      const { profit, fees } = calculateNetProfit(
+        bPrice,
+        tPrice,
+        qty,
+        activeFeeModel,
+        activeFeeModel,
+        assetClass
+      );
+      const buyGross = bPrice * qty;
+      const roi = buyGross > 0 ? (profit / buyGross) * 100 : 0;
+      return { tPrice, profit, fees, roi };
+    });
+  }, [matrixTargetsStr, buyPriceA, quantity, activeFeeModel, assetClass]);
 
   // Trade History Hook
   const { history, saveCalculation, deleteCalculation, exportToExcel, exportToJSON } =
@@ -132,57 +177,54 @@ export default function CalculatorPage() {
   const sellStats = useMemo(() => {
     const sPrice = parseFloat(sellPrice);
     const qty = parseFloat(quantity);
-    const fRate = (parseFloat(feeRate) || 0) / 100;
 
     if (isNaN(sPrice) || isNaN(qty)) {
       return { gross: 0, fee: 0, net: 0 };
     }
 
     const gross = sPrice * qty;
-    const fee = gross * fRate;
+    const fee = calculateFeeAmount(gross, qty, activeFeeModel);
     const net = gross - fee;
 
     return { gross, fee, net };
-  }, [sellPrice, quantity, feeRate]);
+  }, [sellPrice, quantity, activeFeeModel]);
 
   // Scenario A Result
   const scenarioAResult = useMemo(() => {
     const bPrice = parseFloat(buyPriceA);
-    const fRate = (parseFloat(feeRate) || 0) / 100;
     if (isNaN(bPrice)) return null;
 
     return calculateAccumulation({
       buyPrice: bPrice,
       sellPrice: parseFloat(sellPrice),
       quantity: parseFloat(quantity),
-      buyFeeRate: fRate,
-      sellFeeRate: fRate,
+      buyFeeModel: activeFeeModel,
+      sellFeeModel: activeFeeModel,
+      assetClass,
     });
-  }, [buyPriceA, sellPrice, quantity, feeRate]);
+  }, [buyPriceA, sellPrice, quantity, activeFeeModel, assetClass]);
 
   // Scenario B Result (Live)
   const scenarioBResult = useMemo(() => {
     if (!livePrice) return null;
-    const fRate = (parseFloat(feeRate) || 0) / 100;
 
     return calculateAccumulation({
       buyPrice: livePrice,
       sellPrice: parseFloat(sellPrice),
       quantity: parseFloat(quantity),
-      buyFeeRate: fRate,
-      sellFeeRate: fRate,
+      buyFeeModel: activeFeeModel,
+      sellFeeModel: activeFeeModel,
+      assetClass,
     });
-  }, [livePrice, sellPrice, quantity, feeRate]);
+  }, [livePrice, sellPrice, quantity, activeFeeModel, assetClass]);
 
   // Break-even for Scenario B
   const breakEvenB = useMemo(() => {
-    const fRate = (parseFloat(feeRate) || 0) / 100;
     const qty = parseFloat(quantity);
-    const netSell = sellStats.net;
-    if (isNaN(qty) || isNaN(netSell)) return 0;
+    if (isNaN(qty) || !livePrice) return 0;
 
-    return (netSell * (1 - fRate)) / qty;
-  }, [sellStats.net, quantity, feeRate]);
+    return calculateBreakEven(livePrice, qty, activeFeeModel, activeFeeModel, assetClass);
+  }, [livePrice, quantity, activeFeeModel, assetClass]);
 
   const handleSave = async (
     type: "break_even" | "profit",
@@ -234,6 +276,23 @@ export default function CalculatorPage() {
             <LanguageSwitcher />
             <ThemeToggle />
             <div className="flex items-center gap-2 px-1 py-1 rounded-full border bg-background shadow-sm pr-3">
+              <Tabs
+                value={assetClass}
+                onValueChange={(val) => setAssetClass(val as AssetClass)}
+                className="h-7 flex items-center bg-transparent border-none mx-1"
+              >
+                <TabsList className="h-6 bg-slate-100/50 dark:bg-slate-800 p-0.5 rounded-full">
+                  <TabsTrigger value="crypto" className="text-[9px] h-5 rounded-full px-2">
+                    Crypto
+                  </TabsTrigger>
+                  <TabsTrigger value="us_stock" className="text-[9px] h-5 rounded-full px-2">
+                    US
+                  </TabsTrigger>
+                  <TabsTrigger value="hk_stock" className="text-[9px] h-5 rounded-full px-2">
+                    HK
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -379,19 +438,16 @@ export default function CalculatorPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label
-                      htmlFor="feeRate"
-                      className="text-[10px] font-bold uppercase text-muted-foreground"
-                    >
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">
                       {tCalc("feeRate")}
                     </Label>
-                    <Input
-                      id="feeRate"
-                      type="number"
-                      value={feeRate}
-                      onChange={(e) => setFeeRate(e.target.value)}
-                      className="font-mono text-center h-9"
-                    />
+                    <div className="flex items-center justify-center px-1 border rounded-md bg-muted/10 font-mono text-[9px] text-muted-foreground text-center h-9">
+                      {activeFeeModel.type === "percentage"
+                        ? `${(activeFeeModel.rate * 100).toFixed(3)}%`
+                        : activeFeeModel.type === "per_share"
+                          ? `${activeFeeModel.rate} ${activeFeeModel.currency}/sh (Min: ${activeFeeModel.min || 0})`
+                          : `${activeFeeModel.rate} ${activeFeeModel.currency}`}
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">
@@ -462,8 +518,8 @@ export default function CalculatorPage() {
           </div>
 
           {/* Right Panel: Scenarios Comparison */}
-          <div className="lg:col-span-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+          <div className="lg:col-span-8 flex flex-col gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Scenario A Card */}
               <Card className="shadow-2xl shadow-slate-200/50 border-none bg-white h-full flex flex-col overflow-hidden">
                 <div className="h-1.5 bg-green-500 w-full" />
@@ -713,6 +769,75 @@ export default function CalculatorPage() {
                 </CardFooter>
               </Card>
             </div>
+
+            {/* Matrix Projection Card */}
+            <Card className="shadow-2xl shadow-purple-100/50 border-none bg-gradient-to-br from-purple-50/30 to-white overflow-hidden">
+              <div className="h-1.5 bg-purple-500 w-full" />
+              <CardHeader className="pb-4">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-purple-600 flex items-center gap-2">
+                    <Layers className="w-3.5 h-3.5" />
+                    {tCalc("matrixTitle") || "多价位 P&L 矩阵试算"}
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground whitespace-nowrap">
+                      {tCalc("targetPrices") || "目标卖出价 (逗号分隔)"}
+                    </Label>
+                    <Input
+                      value={matrixTargetsStr}
+                      onChange={(e) => setMatrixTargetsStr(e.target.value)}
+                      placeholder="e.g. 70000, 75000, 80000"
+                      className="font-mono text-xs h-8"
+                    />
+                  </div>
+                  <div className="overflow-x-auto rounded-xl border border-slate-100">
+                    <table className="w-full text-left text-xs font-mono">
+                      <thead className="bg-slate-50 text-[9px] uppercase tracking-widest text-slate-400">
+                        <tr>
+                          <th className="px-4 py-2">Target Price ({quoteAsset})</th>
+                          <th className="px-4 py-2">Net P&L ({quoteAsset})</th>
+                          <th className="px-4 py-2">ROI</th>
+                          <th className="px-4 py-2">Est. Fees</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {matrixResults.map((r, i) => (
+                          <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-4 py-2 font-bold text-slate-700">
+                              {r.tPrice.toLocaleString()}
+                            </td>
+                            <td
+                              className={`px-4 py-2 font-bold ${r.profit >= 0 ? "text-green-500" : "text-red-500"}`}
+                            >
+                              {r.profit >= 0 ? "+" : ""}
+                              {r.profit.toFixed(2)}
+                            </td>
+                            <td
+                              className={`px-4 py-2 font-bold ${r.roi >= 0 ? "text-green-500" : "text-red-500"}`}
+                            >
+                              {r.roi >= 0 ? "+" : ""}
+                              {r.roi.toFixed(2)}%
+                            </td>
+                            <td className="px-4 py-2 text-slate-400">{r.fees.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                        {matrixResults.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                              Please enter valid prices
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
