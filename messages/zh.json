@@ -310,6 +310,8 @@
     "historyDesc": "最近的通知推送记录",
     "emptyHistory": "暂无推送历史",
     "clearHistory": "清空记录",
+    "clearSuccess": "推送历史已清空",
+    "clearFailed": "清空记录失败",
     "loading": "加载推送配置..."
   }
 }

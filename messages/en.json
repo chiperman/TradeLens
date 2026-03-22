@@ -308,6 +308,8 @@
     "historyTitle": "Notification History",
     "historyDesc": "Recent push notification records",
     "emptyHistory": "No notification history",
-    "clearHistory": "Clear History"
+    "clearHistory": "Clear History",
+    "clearSuccess": "Push history cleared",
+    "clearFailed": "Failed to clear history"
   }
 }

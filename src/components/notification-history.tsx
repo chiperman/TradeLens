@@ -6,10 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Clock, CheckCircle2, XCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { sileo } from "sileo";
 
 export function NotificationHistory() {
   const t = useTranslations("Notifications");
   const { logs, loading, clearLogs } = useNotificationLogs();
+
+  const handleClear = async () => {
+    try {
+      await clearLogs();
+      sileo.success({ title: t("clearSuccess") });
+    } catch (err) {
+      sileo.error({ title: t("clearFailed") });
+    }
+  };
 
   if (loading) {
     return (
@@ -40,7 +50,7 @@ export function NotificationHistory() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={clearLogs}
+            onClick={handleClear}
             className="text-red-500 hover:text-red-600 hover:bg-red-50"
           >
             <Trash2 className="w-4 h-4 mr-2" />
