@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-import { binanceAuthenticatedFetch, type BinanceTrade } from "@/lib/binance";
+import { BinanceAdapter } from "@/lib/exchange/binance";
 
 // 注意：生产环境下 API Secret 因该是加密存储的，此处仅作为逻辑演示
 // Phase 3 核心任务是实现稳健的同步。
@@ -15,11 +15,14 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // 2. 从数据库获取 API Key (此处假设已存在 keys，后续需增加前端绑定页面)
+    // 2. 从数据库获取 API Key
     const { data: keys, error: keyError } = await supabase
       .from("api_keys")
       .select("*")
@@ -35,45 +38,46 @@ export async function POST(req: NextRequest) {
     const apiKey = decrypt(keys.api_key_encrypted);
     const apiSecret = decrypt(keys.api_secret_encrypted);
 
-    // 3. 执行同步逻辑 (演示以 BTCUSDT 为例)
-    const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]; // 动态化
-    const allTrades: Record<string, unknown>[] = [];
+    // 3. 执行同步逻辑 (使用统一适配器)
+    const adapter = new BinanceAdapter();
+    const creds = { apiKey, apiSecret };
+    const trades = await adapter.fetchTrades(creds, {
+      symbols: ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+    });
 
-    for (const symbol of symbols) {
-      const trades = await binanceAuthenticatedFetch<BinanceTrade[]>(
-        "/api/v3/myTrades",
-        apiKey,
-        apiSecret,
-        { symbol }
-      );
-      
-      // 4. 将数据批量转换并写入 transactions 表
-      if (trades && trades.length > 0) {
-        const mapped = trades.map((t) => ({
-          user_id: user.id,
-          symbol: t.symbol,
-          side: t.isBuyer ? "BUY" : "SELL",
-          price: parseFloat(t.price),
-          quantity: parseFloat(t.qty),
-          quote_quantity: parseFloat(t.quoteQty),
-          commission: parseFloat(t.commission),
-          commission_asset: t.commissionAsset,
-          trade_id: t.id,
-          order_id: t.orderId,
-          transacted_at: new Date(t.time).toISOString(),
-        }));
-        
-        const { error: insertError } = await supabase
-          .from("transactions")
-          .upsert(mapped, { onConflict: "user_id, trade_id" }); // 需在 DB 增加 trade_id 唯一约束
+    // 4. 将数据批量转换并写入 transactions 表
+    if (trades && trades.length > 0) {
+      const mapped = trades.map((t) => ({
+        user_id: user.id,
+        symbol: t.symbol,
+        asset_class: t.assetClass,
+        exchange: t.exchange,
+        side: t.side,
+        price: t.price,
+        quantity: t.quantity,
+        quote_quantity: t.quoteQuantity,
+        commission: t.commission,
+        commission_asset: t.commissionAsset,
+        trade_id: t.externalTradeId,
+        order_id: t.externalOrderId,
+        transacted_at: t.transactedAt.toISOString(),
+      }));
 
-        if (!insertError) allTrades.push(...mapped);
-      }
+      const { error: insertError } = await supabase
+        .from("transactions")
+        .upsert(mapped, { onConflict: "user_id, trade_id" });
+
+      if (insertError) throw insertError;
+
+      return NextResponse.json({ success: true, count: trades.length });
     }
 
-    return NextResponse.json({ success: true, count: allTrades.length });
+    return NextResponse.json({ success: true, count: 0 });
   } catch (err) {
     console.error("Sync failed:", err);
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Sync failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Sync failed" },
+      { status: 500 }
+    );
   }
 }

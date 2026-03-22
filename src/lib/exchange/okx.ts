@@ -4,7 +4,6 @@
  * 使用 HMAC SHA256 + Passphrase 签名，signature 输出 Base64。
  */
 
-import crypto from "crypto";
 import type {
   ExchangeAdapter,
   ExchangeCredentials,
@@ -12,14 +11,15 @@ import type {
   NormalizedFundFlow,
   SyncParams,
 } from "./types";
+import { ExchangeHttpClient, SigningStrategies } from "./base/exchange-client";
 
 interface OkxRawFill {
   instId: string;
   tradeId: string;
   ordId: string;
+  side: string;
   fillPx: string;
   fillSz: string;
-  side: string;
   fee: string;
   feeCcy: string;
   ts: string;
@@ -32,64 +32,38 @@ interface OkxDepositRecord {
   ts: string;
 }
 
-function signOkx(
-  timestamp: string,
-  method: string,
-  requestPath: string,
-  body: string,
-  secretKey: string
-): string {
-  const preHash = timestamp + method.toUpperCase() + requestPath + (body || "");
-  return crypto.createHmac("sha256", secretKey).update(preHash).digest("base64");
-}
-
-async function authFetch<T>(
-  method: string,
-  path: string,
-  creds: ExchangeCredentials,
-  params: Record<string, string> = {}
-): Promise<T> {
-  const timestamp = new Date().toISOString();
-  const qs = new URLSearchParams(params).toString();
-  const fullPath = qs ? `${path}?${qs}` : path;
-  const signature = signOkx(timestamp, method, fullPath, "", creds.apiSecret!);
-
-  const url = `https://www.okx.com${fullPath}`;
-  const response = await fetch(url.toString(), {
-    method,
-    headers: {
-      "OK-ACCESS-KEY": creds.apiKey!,
-      "OK-ACCESS-SIGN": signature,
-      "OK-ACCESS-TIMESTAMP": timestamp,
-      "OK-ACCESS-PASSPHRASE": creds.passphrase!,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.msg || `OKX API ${response.status}`);
-  }
-  const json = await response.json();
-  return json.data as T;
-}
-
 export class OkxAdapter implements ExchangeAdapter {
   readonly name = "okx" as const;
+  private client: ExchangeHttpClient;
+
+  constructor() {
+    this.client = new ExchangeHttpClient({
+      baseUrl: "https://www.okx.com",
+      signingStrategy: SigningStrategies.okx,
+      signatureHeader: "OK-ACCESS-SIGN",
+      apiKeyHeader: "OK-ACCESS-KEY",
+      timestampHeader: "OK-ACCESS-TIMESTAMP",
+      passphraseHeader: "OK-ACCESS-PASSPHRASE",
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  private async fetch<T>(
+    endpoint: string,
+    creds: ExchangeCredentials,
+    params: Record<string, string | number> = {}
+  ): Promise<T> {
+    return this.client.request<T>("GET", endpoint, creds, params);
+  }
 
   async fetchTrades(creds: ExchangeCredentials, params: SyncParams): Promise<NormalizedTrade[]> {
-    const apiParams: Record<string, string> = { instType: "SPOT" };
+    const apiParams: Record<string, string | number> = { instType: "SPOT" };
     if (params.startTime) apiParams.begin = String(params.startTime);
     if (params.endTime) apiParams.end = String(params.endTime);
 
-    const raw = await authFetch<OkxRawFill[]>(
-      "GET",
-      "/api/v5/trade/fills-history",
-      creds,
-      apiParams
-    );
+    const raw = await this.fetch<OkxRawFill[]>("/api/v5/trade/fills-history", creds, apiParams);
 
-    return (raw || []).map((t) => ({
+    return (raw || []).map((t: OkxRawFill) => ({
       symbol: t.instId,
       assetClass: "crypto" as const,
       exchange: "okx" as const,
@@ -106,9 +80,9 @@ export class OkxAdapter implements ExchangeAdapter {
   }
 
   async fetchDeposits(creds: ExchangeCredentials): Promise<NormalizedFundFlow[]> {
-    const raw = await authFetch<OkxDepositRecord[]>("GET", "/api/v5/asset/deposit-history", creds);
+    const raw = await this.fetch<OkxDepositRecord[]>("/api/v5/asset/deposit-history", creds);
 
-    return (raw || []).map((d) => ({
+    return (raw || []).map((d: OkxDepositRecord) => ({
       exchange: "okx" as const,
       direction: "deposit" as const,
       amount: parseFloat(d.amt),
@@ -119,13 +93,9 @@ export class OkxAdapter implements ExchangeAdapter {
   }
 
   async fetchWithdrawals(creds: ExchangeCredentials): Promise<NormalizedFundFlow[]> {
-    const raw = await authFetch<OkxDepositRecord[]>(
-      "GET",
-      "/api/v5/asset/withdrawal-history",
-      creds
-    );
+    const raw = await this.fetch<OkxDepositRecord[]>("/api/v5/asset/withdrawal-history", creds);
 
-    return (raw || []).map((w) => ({
+    return (raw || []).map((w: OkxDepositRecord) => ({
       exchange: "okx" as const,
       direction: "withdrawal" as const,
       amount: parseFloat(w.amt),
@@ -137,7 +107,7 @@ export class OkxAdapter implements ExchangeAdapter {
 
   async testConnection(creds: ExchangeCredentials): Promise<boolean> {
     try {
-      await authFetch("GET", "/api/v5/account/balance", creds);
+      await this.fetch("/api/v5/account/balance", creds);
       return true;
     } catch {
       return false;

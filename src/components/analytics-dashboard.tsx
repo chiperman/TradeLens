@@ -4,15 +4,15 @@ import { useAnalytics } from "@/hooks/use-analytics";
 import { useAssets } from "@/hooks/use-assets";
 import { usePortfolioStats } from "@/hooks/use-portfolio-stats";
 import dynamic from "next/dynamic";
-const PerformanceChart = dynamic(() => import("@/components/performance-chart"), {
+const PerformanceChart = dynamic(() => import("@/components/charts/performance-chart"), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-slate-100 w-full h-full rounded-2xl" />,
 });
-const AllocationChart = dynamic(() => import("@/components/allocation-chart"), {
+const AllocationChart = dynamic(() => import("@/components/charts/allocation-chart"), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-slate-100 w-full h-full rounded-2xl" />,
 });
-const MonthlyPnlChart = dynamic(() => import("@/components/charts/monthly-pnl-chart"), {
+const MonthlyPnlChart = dynamic(() => import("@/components/charts/monthly-pnl"), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-slate-100 w-full h-full rounded-2xl" />,
 });

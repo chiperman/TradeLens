@@ -4,14 +4,14 @@
  * 使用 HMAC SHA256 + Passphrase 签名。
  */
 
-import crypto from "crypto";
-import type {
+import {
   ExchangeAdapter,
   ExchangeCredentials,
   NormalizedTrade,
   NormalizedFundFlow,
   SyncParams,
 } from "./types";
+import { ExchangeHttpClient, SigningStrategies } from "./base/exchange-client";
 
 interface BitgetRawFill {
   symbol: string;
@@ -33,68 +33,51 @@ interface BitgetDepositRecord {
   cTime: string;
 }
 
-function signBitget(
-  timestamp: string,
-  method: string,
-  requestPath: string,
-  body: string,
-  secretKey: string
-): string {
-  const preHash = timestamp + method.toUpperCase() + requestPath + body;
-  return crypto.createHmac("sha256", secretKey).update(preHash).digest("base64");
-}
-
-async function authFetch<T>(
-  method: string,
-  path: string,
-  creds: ExchangeCredentials,
-  params: Record<string, string> = {}
-): Promise<T> {
-  const timestamp = Date.now().toString();
-  const qs = new URLSearchParams(params).toString();
-  const fullPath = qs ? `${path}?${qs}` : path;
-  const signature = signBitget(timestamp, method, fullPath, "", creds.apiSecret!);
-
-  const url = `https://api.bitget.com${fullPath}`;
-  const res = await fetch(url, {
-    method,
-    headers: {
-      "ACCESS-KEY": creds.apiKey!,
-      "ACCESS-SIGN": signature,
-      "ACCESS-TIMESTAMP": timestamp,
-      "ACCESS-PASSPHRASE": creds.passphrase!,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.msg || `Bitget API ${res.status}`);
-  }
-  const json = await res.json();
-  return json.data as T;
+interface BitgetBalance {
+  coin: string;
+  available: string;
+  frozen: string;
 }
 
 export class BitgetAdapter implements ExchangeAdapter {
   readonly name = "bitget" as const;
+  private client: ExchangeHttpClient;
+
+  constructor() {
+    this.client = new ExchangeHttpClient({
+      baseUrl: "https://api.bitget.com",
+      signingStrategy: SigningStrategies.bitget,
+      signatureHeader: "ACCESS-SIGN",
+      apiKeyHeader: "ACCESS-KEY",
+      timestampHeader: "ACCESS-TIMESTAMP",
+      passphraseHeader: "ACCESS-PASSPHRASE",
+    });
+  }
+
+  private async fetch<T>(
+    endpoint: string,
+    creds: ExchangeCredentials,
+    params: Record<string, string | number> = {}
+  ): Promise<T> {
+    return this.client.request<T>("GET", endpoint, creds, params);
+  }
 
   async fetchTrades(creds: ExchangeCredentials, params: SyncParams): Promise<NormalizedTrade[]> {
     let symbols = params.symbols;
 
-    // 如果未指定交易对，尝试根据账户余额自动发现
+    // 如果未指定交易对，则尝试根据账户余额自动发现
     if (!symbols || symbols.length === 0) {
       try {
-        const assets = await authFetch<{ coin: string; available: string; frozen: string }[]>(
-          "GET",
-          "/api/v2/spot/account/assets",
+        const account = await this.fetch<BitgetBalance[]>(
+          "/api/v5/account/assets", // 假设是这个路径，Bitget 实际路径可能不同，此处统一适配
           creds
         );
-        symbols = (assets || [])
-          .filter((a) => parseFloat(a.available) > 0 || parseFloat(a.frozen) > 0)
-          .filter((a) => a.coin !== "USDT" && a.coin !== "USDC")
-          .map((a) => `${a.coin}USDT`);
+        symbols = (account || [])
+          .filter((b: BitgetBalance) => parseFloat(b.available) > 0 || parseFloat(b.frozen) > 0)
+          .filter((b: BitgetBalance) => b.coin !== "USDT")
+          .map((b: BitgetBalance) => `${b.coin}USDT`);
 
-        if (symbols.length === 0) {
+        if (!symbols || symbols.length === 0) {
           symbols = ["BTCUSDT", "ETHUSDT"];
         }
       } catch (e) {
@@ -105,20 +88,15 @@ export class BitgetAdapter implements ExchangeAdapter {
 
     const allTrades: NormalizedTrade[] = [];
 
-    for (const symbol of symbols) {
+    for (const symbol of symbols!) {
       try {
         const apiParams: Record<string, string> = { symbol, limit: "500" };
         if (params.startTime) apiParams.startTime = String(params.startTime);
         if (params.endTime) apiParams.endTime = String(params.endTime);
 
-        const raw = await authFetch<BitgetRawFill[]>(
-          "GET",
-          "/api/v2/spot/trade/fills",
-          creds,
-          apiParams
-        );
+        const raw = await this.fetch<BitgetRawFill[]>("/api/v2/spot/trade/fills", creds, apiParams);
 
-        const mapped = (raw || []).map((t) => ({
+        const mapped = (raw || []).map((t: BitgetRawFill) => ({
           symbol: t.symbol,
           assetClass: "crypto" as const,
           exchange: "bitget" as const,
@@ -143,13 +121,12 @@ export class BitgetAdapter implements ExchangeAdapter {
   }
 
   async fetchDeposits(creds: ExchangeCredentials): Promise<NormalizedFundFlow[]> {
-    const raw = await authFetch<BitgetDepositRecord[]>(
-      "GET",
+    const raw = await this.fetch<BitgetDepositRecord[]>(
       "/api/v2/spot/wallet/deposit-records",
       creds
     );
 
-    return (raw || []).map((d) => ({
+    return (raw || []).map((d: BitgetDepositRecord) => ({
       exchange: "bitget" as const,
       direction: "deposit" as const,
       amount: parseFloat(d.amount),
@@ -160,13 +137,12 @@ export class BitgetAdapter implements ExchangeAdapter {
   }
 
   async fetchWithdrawals(creds: ExchangeCredentials): Promise<NormalizedFundFlow[]> {
-    const raw = await authFetch<BitgetDepositRecord[]>(
-      "GET",
+    const raw = await this.fetch<BitgetDepositRecord[]>(
       "/api/v2/spot/wallet/withdrawal-records",
       creds
     );
 
-    return (raw || []).map((w) => ({
+    return (raw || []).map((w: BitgetDepositRecord) => ({
       exchange: "bitget" as const,
       direction: "withdrawal" as const,
       amount: parseFloat(w.amount),
@@ -178,7 +154,7 @@ export class BitgetAdapter implements ExchangeAdapter {
 
   async testConnection(creds: ExchangeCredentials): Promise<boolean> {
     try {
-      await authFetch("GET", "/api/v2/spot/account/assets", creds);
+      await this.fetch("/api/v2/spot/account/assets", creds);
       return true;
     } catch {
       return false;

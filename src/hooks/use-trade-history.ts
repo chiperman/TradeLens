@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import * as ExcelJS from "exceljs";
+import { useDataQuery } from "./base/use-data-query";
+import type { User } from "@supabase/supabase-js";
 
 export interface Calculation {
   id?: string;
@@ -18,50 +20,31 @@ export interface Calculation {
  * 交易历史记录 Hook
  */
 export function useTradeHistory() {
-  const [history, setHistory] = useState<Calculation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null);
 
-  // 获取最近 10 条历史记录
-  const fetchHistory = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        setHistory([]);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("calculations")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (!error && data) {
-        setHistory(data as Calculation[]);
-      }
-    } catch (err) {
-      console.error("Fetch history failed:", err);
-    } finally {
-      setIsLoading(false);
-    }
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, [supabase]);
+
+  const {
+    data: history,
+    loading: isLoading,
+    refresh: refreshHistory,
+  } = useDataQuery<Calculation>({
+    table: "calculations",
+    order: { column: "created_at", ascending: false },
+    limit: 10,
+    enabled: !!user,
+  });
 
   // 获取所有记录用于导出
   const fetchAllHistory = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
     if (!user) return [];
-
     const { data, error } = await supabase
       .from("calculations")
       .select("*")
       .order("created_at", { ascending: false });
-
     return error ? [] : (data as Calculation[]);
   };
 
@@ -119,38 +102,26 @@ export function useTradeHistory() {
 
   // 保存一条新记录
   const saveCalculation = async (calc: Calculation) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
     if (!user) return { error: "请先登录" };
-
     const { error } = await supabase.from("calculations").insert([{ ...calc, user_id: user.id }]);
-    if (!error) await fetchHistory();
+    if (!error) await refreshHistory();
     return { error };
   };
 
   // 删除一条记录
   const deleteCalculation = async (id: string) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
     if (!user) return { error: "请先登录" };
-
     const { error } = await supabase.from("calculations").delete().eq("id", id);
-    if (!error) await fetchHistory();
+    if (!error) await refreshHistory();
     return { error };
   };
-
-  useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
 
   return {
     history,
     isLoading,
     saveCalculation,
     deleteCalculation,
-    refreshHistory: fetchHistory,
+    refreshHistory,
     exportToExcel,
     exportToJSON,
   };

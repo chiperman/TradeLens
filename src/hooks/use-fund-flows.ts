@@ -3,74 +3,65 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import type { FundFlow, FundFlowFormData } from "@/types/transaction";
+import { useDataQuery } from "./base/use-data-query";
+import type { User } from "@supabase/supabase-js";
 
 /**
  * 资金流水 CRUD Hook
  */
 export function useFundFlows() {
   const supabase = createClient();
-  const [fundFlows, setFundFlows] = useState<FundFlow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchFundFlows = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { data, error: fetchError } = await supabase
-        .from("fund_flows")
-        .select("*")
-        .order("transacted_at", { ascending: false });
-
-      if (fetchError) throw fetchError;
-      setFundFlows((data as FundFlow[]) ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch fund flows");
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    fetchFundFlows();
-  }, [fetchFundFlows]);
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, [supabase]);
+
+  const {
+    data: fundFlows,
+    loading,
+    error,
+    refresh,
+  } = useDataQuery<FundFlow>({
+    table: "fund_flows",
+    order: { column: "transacted_at", ascending: false },
+    enabled: !!user,
+  });
 
   const createFundFlow = useCallback(
-    async (data: FundFlowFormData) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
+    async (formData: FundFlowFormData) => {
+      if (!user) throw new Error("Not authenticated");
 
       const { error: insertError } = await supabase.from("fund_flows").insert({
-        user_id: user.user.id,
-        exchange: data.exchange,
-        direction: data.direction,
-        amount: data.amount,
-        currency: data.currency,
-        notes: data.notes || null,
-        transacted_at: data.transacted_at,
+        user_id: user.id,
+        exchange: formData.exchange,
+        direction: formData.direction,
+        amount: formData.amount,
+        currency: formData.currency,
+        notes: formData.notes || null,
+        transacted_at: formData.transacted_at,
       });
 
       if (insertError) throw insertError;
-      await fetchFundFlows();
+      await refresh();
     },
-    [supabase, fetchFundFlows]
+    [supabase, user, refresh]
   );
 
   const updateFundFlow = useCallback(
-    async (id: string, data: Partial<FundFlowFormData>) => {
+    async (id: string, formData: Partial<FundFlowFormData>) => {
       const { error: updateError } = await supabase
         .from("fund_flows")
         .update({
-          ...data,
-          amount: data.amount !== undefined ? Number(data.amount) : undefined,
+          ...formData,
+          amount: formData.amount !== undefined ? Number(formData.amount) : undefined,
         })
         .eq("id", id);
 
       if (updateError) throw updateError;
-      await fetchFundFlows();
+      await refresh();
     },
-    [supabase, fetchFundFlows]
+    [supabase, refresh]
   );
 
   const deleteFundFlow = useCallback(
@@ -78,9 +69,9 @@ export function useFundFlows() {
       const { error: deleteError } = await supabase.from("fund_flows").delete().eq("id", id);
 
       if (deleteError) throw deleteError;
-      await fetchFundFlows();
+      await refresh();
     },
-    [supabase, fetchFundFlows]
+    [supabase, refresh]
   );
 
   return {
@@ -90,6 +81,6 @@ export function useFundFlows() {
     createFundFlow,
     updateFundFlow,
     deleteFundFlow,
-    refresh: fetchFundFlows,
+    refresh,
   };
 }

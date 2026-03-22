@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
 import type {
   Transaction,
@@ -9,6 +9,8 @@ import type {
   PaginationState,
   SortState,
 } from "@/types/transaction";
+import { useDataQuery } from "./base/use-data-query";
+import type { User } from "@supabase/supabase-js";
 
 const PAGE_SIZE = 20;
 
@@ -17,9 +19,7 @@ const PAGE_SIZE = 20;
  */
 export function useTransactions(initialFilter?: TransactionFilter) {
   const supabase = createClient();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [filter, setFilter] = useState<TransactionFilter>(initialFilter ?? {});
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -31,131 +31,100 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     direction: "desc",
   });
 
-  const fetchTransactions = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      let query = supabase.from("transactions").select("*", { count: "exact" });
-
-      // 应用筛选
-      if (filter.asset_class) {
-        query = query.eq("asset_class", filter.asset_class);
-      }
-      if (filter.exchange) {
-        query = query.eq("exchange", filter.exchange);
-      }
-      if (filter.side) {
-        query = query.eq("side", filter.side);
-      }
-      if (filter.source) {
-        query = query.eq("source", filter.source);
-      }
-      if (filter.symbol) {
-        query = query.ilike("symbol", `%${filter.symbol}%`);
-      }
-      if (filter.date_from) {
-        query = query.gte("transacted_at", filter.date_from);
-      }
-      if (filter.date_to) {
-        query = query.lte("transacted_at", filter.date_to);
-      }
-
-      // 排序
-      query = query.order(sort.column, { ascending: sort.direction === "asc" });
-
-      // 分页
-      const from = (pagination.page - 1) * pagination.pageSize;
-      const to = from + pagination.pageSize - 1;
-      query = query.range(from, to);
-
-      const { data, error: fetchError, count } = await query;
-
-      if (fetchError) throw fetchError;
-
-      setTransactions((data as Transaction[]) ?? []);
-      setPagination((prev) => ({
-        ...prev,
-        total: count ?? 0,
-      }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch transactions");
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase, filter, sort, pagination.page, pagination.pageSize]);
-
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, [supabase]);
+
+  const range = useMemo(() => {
+    const from = (pagination.page - 1) * pagination.pageSize;
+    const to = from + pagination.pageSize - 1;
+    return { from, to };
+  }, [pagination.page, pagination.pageSize]);
+
+  const {
+    data: transactions,
+    count: totalCount,
+    loading,
+    refresh,
+  } = useDataQuery<Transaction>({
+    table: "transactions",
+    filters: filter,
+    order: { column: sort.column, ascending: sort.direction === "asc" },
+    range,
+    enabled: !!user,
+  });
+
+  const paginationWithTotal = useMemo(
+    () => ({
+      ...pagination,
+      total: totalCount,
+    }),
+    [pagination, totalCount]
+  );
 
   const createTransaction = useCallback(
-    async (data: TransactionFormData) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
-
-      const quoteQuantity = data.price * data.quantity;
+    async (formData: TransactionFormData) => {
+      if (!user) throw new Error("Not authenticated");
+      const quoteQuantity = formData.price * formData.quantity;
 
       const { error: insertError } = await supabase.from("transactions").insert({
-        user_id: user.user.id,
-        symbol: data.symbol,
-        asset_name: data.asset_name || null,
-        asset_class: data.asset_class,
-        market: data.market || null,
-        exchange: data.exchange,
-        side: data.side,
-        price: data.price,
-        quantity: data.quantity,
+        user_id: user.id,
+        symbol: formData.symbol,
+        asset_name: formData.asset_name || null,
+        asset_class: formData.asset_class,
+        market: formData.market || null,
+        exchange: formData.exchange,
+        side: formData.side,
+        price: formData.price,
+        quantity: formData.quantity,
         quote_quantity: quoteQuantity,
-        commission: data.commission ?? 0,
-        commission_currency: data.commission_currency ?? "USD",
+        commission: formData.commission ?? 0,
+        commission_currency: formData.commission_currency ?? "USD",
         source: "manual",
-        notes: data.notes || null,
-        transacted_at: data.transacted_at,
+        notes: formData.notes || null,
+        transacted_at: formData.transacted_at,
       });
 
       if (insertError) throw insertError;
-      await fetchTransactions();
+      await refresh();
     },
-    [supabase, fetchTransactions]
+    [supabase, user, refresh]
   );
 
   const bulkCreateTransactions = useCallback(
     async (txs: TransactionFormData[]) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
+      if (!user) throw new Error("Not authenticated");
 
-      const insertData = txs.map((data) => ({
-        user_id: user.user!.id,
-        symbol: data.symbol,
-        asset_name: data.asset_name || null,
-        asset_class: data.asset_class,
-        market: data.market || null,
-        exchange: data.exchange,
-        side: data.side,
-        price: data.price,
-        quantity: data.quantity,
-        quote_quantity: data.price * data.quantity,
-        commission: data.commission ?? 0,
-        commission_currency: data.commission_currency ?? "USD",
+      const insertData = txs.map((formData) => ({
+        user_id: user.id,
+        symbol: formData.symbol,
+        asset_name: formData.asset_name || null,
+        asset_class: formData.asset_class,
+        market: formData.market || null,
+        exchange: formData.exchange,
+        side: formData.side,
+        price: formData.price,
+        quantity: formData.quantity,
+        quote_quantity: formData.price * formData.quantity,
+        commission: formData.commission ?? 0,
+        commission_currency: formData.commission_currency ?? "USD",
         source: "import",
-        notes: data.notes || null,
-        transacted_at: data.transacted_at,
+        notes: formData.notes || null,
+        transacted_at: formData.transacted_at,
       }));
 
       const { error: insertError } = await supabase.from("transactions").insert(insertData);
-
       if (insertError) throw insertError;
-      await fetchTransactions();
+      await refresh();
     },
-    [supabase, fetchTransactions]
+    [supabase, user, refresh]
   );
 
   const updateTransaction = useCallback(
-    async (id: string, data: Partial<TransactionFormData>) => {
-      const updateData: Record<string, unknown> = { ...data };
-      if (data.price !== undefined && data.quantity !== undefined) {
-        updateData.quote_quantity = data.price * data.quantity;
+    async (id: string, formData: Partial<TransactionFormData>) => {
+      const updateData: Record<string, unknown> = { ...formData };
+      if (formData.price !== undefined && formData.quantity !== undefined) {
+        updateData.quote_quantity = formData.price * formData.quantity;
       }
 
       const { error: updateError } = await supabase
@@ -164,26 +133,24 @@ export function useTransactions(initialFilter?: TransactionFilter) {
         .eq("id", id);
 
       if (updateError) throw updateError;
-      await fetchTransactions();
+      await refresh();
     },
-    [supabase, fetchTransactions]
+    [supabase, refresh]
   );
 
   const deleteTransaction = useCallback(
     async (id: string) => {
       const { error: deleteError } = await supabase.from("transactions").delete().eq("id", id);
-
       if (deleteError) throw deleteError;
-      await fetchTransactions();
+      await refresh();
     },
-    [supabase, fetchTransactions]
+    [supabase, refresh]
   );
 
   return {
     transactions,
     loading,
-    error,
-    pagination,
+    pagination: paginationWithTotal,
     sort,
     filter,
     setFilter,
@@ -193,6 +160,6 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     bulkCreateTransactions,
     updateTransaction,
     deleteTransaction,
-    refresh: fetchTransactions,
+    refresh,
   };
 }
