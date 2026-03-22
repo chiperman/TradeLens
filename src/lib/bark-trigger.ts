@@ -18,7 +18,13 @@ export async function sendBarkNotification(
   body: string,
   icon?: string
 ) {
-  const supabaseAdmin = getSupabaseAdmin();
+  let supabaseAdmin;
+  try {
+    supabaseAdmin = getSupabaseAdmin();
+  } catch (initErr) {
+    console.error("Failed to initialize Supabase Admin:", initErr);
+    return false;
+  }
 
   try {
     // 1. Fetch user's notification config
@@ -70,13 +76,15 @@ export async function sendBarkNotification(
 
     // Attempt to log the error if DB is reachable
     try {
-      await supabaseAdmin.from("notification_logs").insert({
-        user_id: userId,
-        title,
-        body,
-        status: "failed",
-        error_message: err instanceof Error ? err.message : "Unknown error",
-      });
+      if (supabaseAdmin) {
+        await supabaseAdmin.from("notification_logs").insert({
+          user_id: userId,
+          title,
+          body,
+          status: "failed",
+          error_message: err instanceof Error ? err.message : "Unknown error",
+        });
+      }
     } catch (logErr) {
       console.error("Failed to log notification error:", logErr);
     }

@@ -36,12 +36,16 @@ export async function POST() {
       return NextResponse.json({ success: true });
     } else {
       return NextResponse.json(
-        { error: "Failed to send notification. Check logs or config." },
+        {
+          error: "Failed to send notification.",
+          hint: "Please ensure Bark is enabled in settings and SUPABASE_SERVICE_ROLE_KEY is configured in .env.local",
+        },
         { status: 500 }
       );
     }
   } catch (err) {
     console.error("Test notification route error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: "Internal server error", detail: message }, { status: 500 });
   }
 }
