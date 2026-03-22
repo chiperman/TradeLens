@@ -120,10 +120,10 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
                     {logs.map((log) => (
                       <MotionTableRow
                         key={log.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 10 }}
-                        transition={{ duration: 0.2 }}
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
                       >
                         <TableCell className="px-6">
                           {log.status === "success" ? (
@@ -159,7 +159,7 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
-                    disabled={page === 0}
+                    disabled={page <= 0}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -167,8 +167,8 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                    disabled={page >= totalPages - 1}
+                    onClick={() => setPage((p) => Math.min(Math.max(0, totalPages - 1), p + 1))}
+                    disabled={page >= totalPages - 1 || totalPages === 0}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
