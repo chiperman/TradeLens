@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Bell, BellRing, Link2, Send } from "lucide-react";
+import { SensitiveInput } from "@/components/ui/sensitive-input";
 
 export function BarkSettings() {
   const t = useTranslations("Notifications");
@@ -52,7 +53,10 @@ export function BarkSettings() {
   const handleTest = async () => {
     setTesting(true);
     try {
-      await testBarkNotification();
+      await testBarkNotification({
+        bark_server_url: serverUrl,
+        bark_device_key: deviceKey,
+      });
       alert(t("testSuccess"));
     } catch (err) {
       alert(err instanceof Error ? err.message : t("testFailed"));
@@ -114,14 +118,11 @@ export function BarkSettings() {
               <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 {t("deviceKey")}
               </Label>
-              <div className="relative flex items-center">
-                <Bell className="absolute left-3 w-4 h-4 text-slate-400" />
-                <Input
+              <div className="relative">
+                <SensitiveInput
                   value={deviceKey}
-                  onChange={(e) => setDeviceKey(e.target.value)}
+                  onValueChange={setDeviceKey}
                   placeholder={t("deviceKeyPlaceholder")}
-                  className="pl-9 h-11"
-                  type="password"
                 />
               </div>
             </div>

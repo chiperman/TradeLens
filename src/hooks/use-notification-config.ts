@@ -63,11 +63,14 @@ export function useNotificationConfig() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error: updateError } = await supabase.from("notification_config").upsert({
-        user_id: user.id,
-        ...newConfig,
-        updated_at: new Date().toISOString(),
-      });
+      const { error: updateError } = await supabase.from("notification_config").upsert(
+        {
+          user_id: user.id,
+          ...newConfig,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
 
       if (updateError) throw updateError;
 
@@ -78,17 +81,17 @@ export function useNotificationConfig() {
     }
   };
 
-  const testBarkNotification = async () => {
-    // Current user context
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
-
+  const testBarkNotification = async (testConfig?: {
+    bark_server_url?: string;
+    bark_device_key?: string;
+  }) => {
     // We can call a server action or an API route to trigger the test
-    // For simplicity, let's assume we have an API route as defined in the plan
     const response = await fetch("/api/notifications/test", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(testConfig || {}),
     });
 
     if (!response.ok) {

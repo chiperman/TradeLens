@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, Plug, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { SensitiveInput } from "@/components/ui/sensitive-input";
 
 const NEEDS_PASSPHRASE: ExchangeName[] = ["bitget", "okx"];
 
@@ -177,30 +178,27 @@ export default function ApiKeysPage() {
             </div>
             <div>
               <label className="text-sm font-medium">API Key</label>
-              <Input
+              <SensitiveInput
                 value={form.apiKey}
-                onChange={(e) => setForm((f) => ({ ...f, apiKey: e.target.value }))}
+                onValueChange={(val: string) => setForm((f) => ({ ...f, apiKey: val }))}
                 placeholder="请输入 API Key"
-                type="password"
               />
             </div>
             <div>
               <label className="text-sm font-medium">API Secret</label>
-              <Input
+              <SensitiveInput
                 value={form.apiSecret}
-                onChange={(e) => setForm((f) => ({ ...f, apiSecret: e.target.value }))}
+                onValueChange={(val: string) => setForm((f) => ({ ...f, apiSecret: val }))}
                 placeholder="请输入 API Secret"
-                type="password"
               />
             </div>
             {NEEDS_PASSPHRASE.includes(selectedExchange) && (
               <div>
                 <label className="text-sm font-medium">Passphrase</label>
-                <Input
+                <SensitiveInput
                   value={form.passphrase}
-                  onChange={(e) => setForm((f) => ({ ...f, passphrase: e.target.value }))}
+                  onValueChange={(val: string) => setForm((f) => ({ ...f, passphrase: val }))}
                   placeholder="请输入 Passphrase"
-                  type="password"
                 />
               </div>
             )}

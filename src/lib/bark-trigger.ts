@@ -16,39 +16,82 @@ export async function sendBarkNotification(
   userId: string,
   title: string,
   body: string,
-  icon?: string
-) {
+  options?: {
+    icon?: string;
+    overrideConfig?: {
+      bark_server_url?: string;
+      bark_device_key?: string;
+    };
+  }
+): Promise<{ success: boolean; error?: string }> {
+  console.log(`[Notification] Triggered for user: ${userId}`);
   let supabaseAdmin;
   try {
     supabaseAdmin = getSupabaseAdmin();
   } catch (initErr) {
-    console.error("Failed to initialize Supabase Admin:", initErr);
-    return false;
+    const msg = initErr instanceof Error ? initErr.message : "Supabase Admin init failed";
+    console.error("[Notification] Failed to initialize Supabase Admin:", msg);
+    return { success: false, error: msg };
   }
 
   try {
-    // 1. Fetch user's notification config
-    const { data: config, error } = await supabaseAdmin
-      .from("notification_config")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    let serverUrl: string;
+    let deviceKey: string;
+    let isEnabled: boolean = true;
 
-    if (error || !config || !config.is_enabled || !config.bark_device_key) {
-      console.warn("Notification not enabled or configured for user", userId);
-      return false; // Silently abort, user disabled or not configured
+    // Use override config if provided (typically for unsaved tests)
+    if (options?.overrideConfig?.bark_device_key) {
+      console.log("[Notification] Using provided configuration overrides.");
+      serverUrl = options.overrideConfig.bark_server_url || "https://api.day.app";
+      deviceKey = options.overrideConfig.bark_device_key;
+      isEnabled = true; // Implicitly enabled if testing
+    } else {
+      // Fetch from database
+      const { data: config, error } = await supabaseAdmin
+        .from("notification_config")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) {
+        console.error("[Notification] Config fetch error:", error.message);
+        return { success: false, error: `Config fetch error: ${error.message}` };
+      }
+
+      if (!config) {
+        return { success: false, error: "No notification configuration found." };
+      }
+
+      if (!config.is_enabled) {
+        return { success: false, error: "Notifications are disabled in your settings." };
+      }
+
+      if (!config.bark_device_key) {
+        return { success: false, error: "Bark device key is not configured." };
+      }
+
+      serverUrl = config.bark_server_url || "https://api.day.app";
+      deviceKey = config.bark_device_key;
+      isEnabled = config.is_enabled;
+    }
+
+    if (!isEnabled) {
+      return { success: false, error: "Notification disabled." };
     }
 
     // 2. Prepare Bark request
-    const serverUrl = config.bark_server_url || "https://api.day.app";
+    const maskedKey =
+      deviceKey.substring(0, 4) + "****" + deviceKey.substring(deviceKey.length - 4);
     const url = new URL(
-      `/${config.bark_device_key}/${encodeURIComponent(title)}/${encodeURIComponent(body)}`,
+      `/${deviceKey}/${encodeURIComponent(title)}/${encodeURIComponent(body)}`,
       serverUrl
     );
     url.searchParams.append("group", "TradeLens");
-    if (icon) {
-      url.searchParams.append("icon", icon);
+    if (options?.icon) {
+      url.searchParams.append("icon", options.icon);
     }
+
+    console.log(`[Notification] Sending to Bark: ${serverUrl} (Key: ${maskedKey})`);
 
     // 3. Send Request
     const response = await fetch(url.toString(), { method: "GET" });
@@ -58,11 +101,13 @@ export async function sendBarkNotification(
     if (!isSuccess) {
       const resData = await response.json().catch(() => ({}));
       errorMessage = resData.message || `HTTP Error: ${response.status}`;
-      console.error("Bark Notification failed:", errorMessage);
+      console.error("[Notification] Bark API failed:", errorMessage);
+    } else {
+      console.log("[Notification] Bark API responded successfully.");
     }
 
     // 4. Log the notification
-    await supabaseAdmin.from("notification_logs").insert({
+    const { error: logError } = await supabaseAdmin.from("notification_logs").insert({
       user_id: userId,
       title,
       body,
@@ -70,11 +115,18 @@ export async function sendBarkNotification(
       error_message: errorMessage,
     });
 
-    return isSuccess;
-  } catch (err) {
-    console.error("Error sending Bark notification:", err);
+    if (logError) {
+      console.error("[Notification] Failed to save log to DB:", logError.message);
+    }
 
-    // Attempt to log the error if DB is reachable
+    return {
+      success: isSuccess,
+      error: errorMessage || undefined,
+    };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[Notification] Critical error:", errorMsg);
+
     try {
       if (supabaseAdmin) {
         await supabaseAdmin.from("notification_logs").insert({
@@ -82,13 +134,13 @@ export async function sendBarkNotification(
           title,
           body,
           status: "failed",
-          error_message: err instanceof Error ? err.message : "Unknown error",
+          error_message: errorMsg,
         });
       }
     } catch (logErr) {
-      console.error("Failed to log notification error:", logErr);
+      console.error("[Notification] Failed to log notification error to DB:", logErr);
     }
 
-    return false;
+    return { success: false, error: errorMsg };
   }
 }

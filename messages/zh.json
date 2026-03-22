@@ -285,7 +285,8 @@
         "status": "状态",
         "results": "结果",
         "type": "类型",
-        "duration": "耗时"
+        "duration": "耗时",
+        "loading": "加载同步日志..."
       }
     }
   },
@@ -306,6 +307,7 @@
     "historyTitle": "推送历史记录",
     "historyDesc": "最近的通知推送记录",
     "emptyHistory": "暂无推送历史",
-    "clearHistory": "清空记录"
+    "clearHistory": "清空记录",
+    "loading": "加载推送配置..."
   }
 }
