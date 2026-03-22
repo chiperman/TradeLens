@@ -259,5 +259,24 @@
     "testConnection": "测试连接",
     "connectionSuccess": "连接成功",
     "connectionFailed": "连接失败"
+  },
+  "Notifications": {
+    "title": "推送通知",
+    "description": "配置 Bark 以接收账户和资产状态推送",
+    "serverUrl": "Bark 服务端地址",
+    "deviceKey": "Device Key",
+    "deviceKeyPlaceholder": "输入 Bark Device Key",
+    "enablePush": "启用推送",
+    "threshold": "触发阈值 (%)",
+    "thresholdDesc": "当资产涨跌幅超过此比例时推送通知",
+    "save": "保存设置",
+    "testPush": "发送测试推送",
+    "testSuccess": "测试推送已发送！",
+    "testFailed": "测试推送失败",
+    "saveSuccess": "通知配置已保存",
+    "historyTitle": "推送历史记录",
+    "historyDesc": "最近的通知推送记录",
+    "emptyHistory": "暂无推送历史",
+    "clearHistory": "清空记录"
   }
 }

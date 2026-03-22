@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { decrypt } from "@/lib/crypto";
 import { initializeAdapters, getAdapter } from "@/lib/exchange/registry";
 import type { ExchangeName, NormalizedTrade, NormalizedFundFlow } from "@/lib/exchange/types";
+import { sendBarkNotification } from "@/lib/bark-trigger";
 
 /**
  * POST - 触发指定交易所的数据同步
@@ -83,6 +84,15 @@ export async function POST(req: NextRequest) {
       .from("api_keys")
       .update({ last_sync_at: new Date().toISOString() })
       .eq("id", keyRecord.id);
+
+    // 9. 触发 Bark 异步通知
+    if (tradesInserted > 0 || fundFlowsInserted > 0) {
+      sendBarkNotification(
+        user.id,
+        "🔄 TradeLens 同步完成",
+        `[${exchange.toUpperCase()}] 成功同步 ${tradesInserted} 笔交易, ${fundFlowsInserted} 笔资金流水。`
+      ).catch(console.error); // 异步不阻塞
+    }
 
     return NextResponse.json({
       success: true,

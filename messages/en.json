@@ -259,5 +259,24 @@
     "testConnection": "Test Connection",
     "connectionSuccess": "Connected",
     "connectionFailed": "Connection failed"
+  },
+  "Notifications": {
+    "title": "Push Notifications",
+    "description": "Configure Bark to receive account state alerts",
+    "serverUrl": "Bark Server URL",
+    "deviceKey": "Device Key",
+    "deviceKeyPlaceholder": "Enter Bark Device Key",
+    "enablePush": "Enable Push Notifications",
+    "threshold": "Alert Threshold (%)",
+    "thresholdDesc": "Send notification when asset value changes by this percentage",
+    "save": "Save Settings",
+    "testPush": "Test Push",
+    "testSuccess": "Test notification sent!",
+    "testFailed": "Test push failed",
+    "saveSuccess": "Notification settings saved",
+    "historyTitle": "Notification History",
+    "historyDesc": "Recent push notification records",
+    "emptyHistory": "No notification history",
+    "clearHistory": "Clear History"
   }
 }
