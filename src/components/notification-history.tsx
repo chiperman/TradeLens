@@ -4,20 +4,32 @@ import { useTranslations } from "next-intl";
 import { useNotificationLogs } from "@/hooks/use-notification-logs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle2, XCircle, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { sileo } from "sileo";
+import { useState, useEffect } from "react";
 
-export function NotificationHistory() {
+export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number }) {
   const t = useTranslations("Notifications");
-  const { logs, loading, clearLogs } = useNotificationLogs();
+  const { logs, loading, clearLogs, refresh } = useNotificationLogs();
+  const [isClearing, setIsClearing] = useState(false);
+
+  useEffect(() => {
+    if (refreshKey > 0) {
+      refresh();
+    }
+  }, [refreshKey, refresh]);
 
   const handleClear = async () => {
+    setIsClearing(true);
     try {
       await clearLogs();
       sileo.success({ title: t("clearSuccess") });
+      refresh();
     } catch (err) {
       sileo.error({ title: t("clearFailed") });
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -51,9 +63,14 @@ export function NotificationHistory() {
             variant="ghost"
             size="sm"
             onClick={handleClear}
+            disabled={isClearing}
             className="text-red-500 hover:text-red-600 hover:bg-red-50"
           >
-            <Trash2 className="w-4 h-4 mr-2" />
+            {isClearing ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4 mr-2" />
+            )}
             {t("clearHistory", { fallback: "Clear History" })}
           </Button>
         )}

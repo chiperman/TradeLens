@@ -12,7 +12,7 @@ import { Bell, BellRing, Link2, Send } from "lucide-react";
 import { SensitiveInput } from "@/components/ui/sensitive-input";
 import { sileo } from "sileo";
 
-export function BarkSettings() {
+export function BarkSettings({ onTestSuccess }: { onTestSuccess?: () => void }) {
   const t = useTranslations("Notifications");
   const { config, loading, updateConfig, testBarkNotification } = useNotificationConfig();
 
@@ -59,6 +59,7 @@ export function BarkSettings() {
         bark_device_key: deviceKey,
       });
       sileo.success({ title: t("testSuccess") });
+      onTestSuccess?.();
     } catch (err) {
       sileo.error({ title: err instanceof Error ? err.message : t("testFailed") });
     } finally {
