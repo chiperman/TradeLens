@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useFundFlows } from "@/hooks/use-fund-flows";
 import { simpleReturn, maxDrawdown, sharpeRatio, winRate, profitLossRatio } from "@/lib/returns";
@@ -19,12 +19,18 @@ export interface PortfolioStats {
   winRatePct: number;
   /** 盈亏比 */
   plRatio: number;
+  /** 总买入成本 */
+  totalCost: number;
   /** 总入金额 */
   totalDeposits: number;
   /** 总出金额 */
   totalWithdrawals: number;
   /** 交易总数 */
   tradeCount: number;
+  /** 内部收益率 (IRR) */
+  irr: number;
+  /** 时间加权收益率 (TWR) */
+  twr: number;
   /** 月度收益数组 */
   monthlyReturns: { month: string; pnl: number }[];
   /** 累计 P&L 序列 */
@@ -41,6 +47,32 @@ export function usePortfolioStats(): {
   const { transactions, loading: txLoading } = useTransactions();
   const { fundFlows, loading: ffLoading } = useFundFlows();
 
+  const [asyncStats, setAsyncStats] = useState({ irr: 0, twr: 0 });
+  const workerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    // Initialize Web Worker
+    workerRef.current = new Worker(new URL("../workers/returns.worker.ts", import.meta.url));
+
+    workerRef.current.onmessage = (e: MessageEvent) => {
+      const { id, result, error } = e.data;
+      if (error) {
+        console.error("Worker Error:", error);
+        return;
+      }
+
+      if (id === "irr") {
+        setAsyncStats((prev) => ({ ...prev, irr: result as number }));
+      } else if (id === "twr") {
+        setAsyncStats((prev) => ({ ...prev, twr: result as number }));
+      }
+    };
+
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, []);
+
   const stats = useMemo<PortfolioStats>(() => {
     // 默认值
     const empty: PortfolioStats = {
@@ -50,9 +82,12 @@ export function usePortfolioStats(): {
       sharpe: 0,
       winRatePct: 0,
       plRatio: 0,
+      totalCost: 0,
       totalDeposits: 0,
       totalWithdrawals: 0,
       tradeCount: 0,
+      irr: asyncStats.irr,
+      twr: asyncStats.twr,
       monthlyReturns: [],
       cumulativePnl: [],
     };
@@ -143,13 +178,52 @@ export function usePortfolioStats(): {
       sharpe,
       winRatePct: winRate(closedTrades),
       plRatio: profitLossRatio(closedTrades),
+      totalCost,
       totalDeposits,
       totalWithdrawals,
       tradeCount: transactions.length,
+      irr: asyncStats.irr,
+      twr: asyncStats.twr,
       monthlyReturns,
       cumulativePnl,
     };
-  }, [transactions, fundFlows]);
+  }, [transactions, fundFlows, asyncStats.irr, asyncStats.twr]);
+
+  // 触发 Web Worker 计算
+  useEffect(() => {
+    if (!workerRef.current || !fundFlows) return;
+
+    const cashFlows = fundFlows.map((f) => ({
+      amount: f.direction === "deposit" ? -f.amount : f.amount,
+      date: f.transacted_at,
+    }));
+
+    const currentValue = stats.totalDeposits - stats.totalWithdrawals + stats.totalPnl;
+    if (currentValue > 0) {
+      cashFlows.push({
+        amount: currentValue,
+        date: new Date().toISOString(),
+      });
+    }
+
+    if (cashFlows.length > 1) {
+      workerRef.current.postMessage({
+        type: "CALCULATE_IRR",
+        id: "irr",
+        payload: { cashFlows },
+      });
+    }
+
+    workerRef.current.postMessage({
+      type: "CALCULATE_TWR",
+      id: "twr",
+      payload: {
+        periods: [
+          { beginValue: stats.totalCost, endValue: stats.totalCost + stats.totalPnl, cashFlow: 0 },
+        ],
+      },
+    });
+  }, [fundFlows, stats.totalDeposits, stats.totalWithdrawals, stats.totalPnl, stats.totalCost]);
 
   return { stats, loading: txLoading || ffLoading };
 }

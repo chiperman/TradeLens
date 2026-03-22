@@ -3,19 +3,15 @@
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useAssets } from "@/hooks/use-assets";
 import { usePortfolioStats } from "@/hooks/use-portfolio-stats";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
+import dynamic from "next/dynamic";
+const PerformanceChart = dynamic(() => import("@/components/performance-chart"), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-slate-100 w-full h-full rounded-2xl" />,
+});
+const AllocationChart = dynamic(() => import("@/components/allocation-chart"), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-slate-100 w-full h-full rounded-2xl" />,
+});
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   TrendingUp,
@@ -26,8 +22,6 @@ import {
   BarChart3,
   Shield,
 } from "lucide-react";
-
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 function KpiCard({
   label,
@@ -149,57 +143,7 @@ export function AnalyticsDashboard() {
           </div>
         </CardHeader>
         <CardContent className="h-[280px] w-full pt-6 px-4">
-          {timeSeries.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={timeSeries} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="date"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 9, fill: "#94a3b8", fontWeight: 700 }}
-                  dy={10}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 9, fill: "#94a3b8", fontWeight: 700 }}
-                  tickFormatter={(val) => `$${val}`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #f1f5f9",
-                    borderRadius: "16px",
-                    fontSize: "10px",
-                    boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.05)",
-                    fontWeight: "bold",
-                  }}
-                  itemStyle={{ color: "#3b82f6", padding: "2px 0" }}
-                  cursor={{ stroke: "#3b82f6", strokeWidth: 1, strokeDasharray: "4 4" }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="cumulativeProfit"
-                  stroke="#3b82f6"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorProfit)"
-                  animationDuration={1500}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-[9px] font-black uppercase tracking-[0.2em] text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl">
-              暂无历史交易数据以生成曲线
-            </div>
-          )}
+          <PerformanceChart data={timeSeries} />
         </CardContent>
       </Card>
 
@@ -217,56 +161,7 @@ export function AnalyticsDashboard() {
           </div>
         </CardHeader>
         <CardContent className="h-[250px] w-full p-4">
-          {assets.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={assets}
-                  dataKey="total_cost"
-                  nameKey="base_asset"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={85}
-                  paddingAngle={8}
-                  stroke="none"
-                >
-                  {assets.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                      className="hover:opacity-80 transition-opacity outline-none"
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: "16px",
-                    border: "none",
-                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-                    fontSize: "10px",
-                    fontWeight: "bold",
-                  }}
-                />
-                <Legend
-                  verticalAlign="bottom"
-                  height={36}
-                  wrapperStyle={{
-                    fontSize: "9px",
-                    fontWeight: "bold",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                  }}
-                  iconType="circle"
-                  iconSize={6}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-[9px] font-black uppercase tracking-[0.2em] text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl">
-              无持仓资产
-            </div>
-          )}
+          <AllocationChart assets={assets} />
         </CardContent>
       </Card>
     </div>
