@@ -33,6 +33,14 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
   const { logs, loading, clearLogs, refresh, page, setPage, total, totalPages } =
     useNotificationLogs();
   const [isClearing, setIsClearing] = useState(false);
+  const [isPageChanging, setIsPageChanging] = useState(false);
+
+  // 监听页码变化，短时间内禁用动画以实现“直接展示”
+  useEffect(() => {
+    setIsPageChanging(true);
+    const timer = setTimeout(() => setIsPageChanging(false), 100);
+    return () => clearTimeout(timer);
+  }, [page]);
 
   useEffect(() => {
     if (refreshKey > 0) {
@@ -104,8 +112,8 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
             </div>
           ) : (
             <>
-              <div className="min-h-[545px]">
-                <Table>
+              <div className="h-[525px] overflow-hidden flex flex-col">
+                <Table className="table-fixed">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="w-[80px] px-6">{t("status")}</TableHead>
@@ -120,16 +128,17 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
                     <AnimatePresence initial={false}>
                       {logs.map((log) => (
                         <MotionTableRow
-                          layout
+                          layout={!isPageChanging}
                           key={log.id}
-                          initial={{ opacity: 0, y: -20 }}
+                          initial={isPageChanging ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 20 }}
+                          exit={isPageChanging ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                           transition={{
-                            duration: 0.3,
+                            duration: isPageChanging ? 0 : 0.3,
                             ease: [0.32, 0.72, 0, 1],
-                            opacity: { duration: 0.2 },
+                            opacity: { duration: isPageChanging ? 0 : 0.2 },
                           }}
+                          className="h-[48px]"
                         >
                           <TableCell className="px-6">
                             {log.status === "success" ? (
