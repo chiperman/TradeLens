@@ -13,8 +13,18 @@ export interface MonthlyPnlData {
   profit: number;
 }
 
+interface DailyTransaction {
+  price: number;
+  quantity: number;
+  side: "BUY" | "SELL";
+  quote_quantity: number;
+  commission: number | null;
+  transacted_at: string;
+}
+
+const supabase = createClient();
+
 export function useAnalytics() {
-  const supabase = createClient();
   const [data, setData] = useState<TimeSeriesData[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyPnlData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +45,7 @@ export function useAnalytics() {
     const dailyPnL: Record<string, number> = {};
     const monthlyPnLMap: Record<string, number> = {};
 
-    transactions.forEach((t) => {
+    (transactions as DailyTransaction[]).forEach((t) => {
       const dateObj = new Date(t.transacted_at);
       const date = dateObj.toLocaleDateString();
       const month = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
@@ -76,7 +86,7 @@ export function useAnalytics() {
     setData(timeSeries);
     setMonthlyData(monthlySeries);
     setLoading(false);
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -4,17 +4,13 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { RefreshCcw, CheckCircle2, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+const supabase = createClient();
 
 export function SyncStatus() {
   const t = useTranslations("Nav");
   const [status, setStatus] = useState<"pending" | "success" | "failed" | "idle">("idle");
-  const supabase = createClient();
 
   useEffect(() => {
     const fetchLatestStatus = async () => {
@@ -51,7 +47,7 @@ export function SyncStatus() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, []);
 
   if (status === "idle") return null;
 

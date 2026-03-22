@@ -9,8 +9,9 @@ import type {
   OptionStatus,
 } from "@/lib/options";
 
+const supabase = createClient();
+
 export function useOptions(initialStatus?: OptionStatus) {
-  const supabase = createClient();
   const [positions, setPositions] = useState<OptionPosition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export function useOptions(initialStatus?: OptionStatus) {
     } finally {
       setLoading(false);
     }
-  }, [initialStatus, supabase]);
+  }, [initialStatus]);
 
   useEffect(() => {
     fetchPositions();

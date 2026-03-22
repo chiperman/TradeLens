@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
-import { type User } from "@supabase/supabase-js";
+import type { User, Session } from "@supabase/supabase-js";
 import {
   Dialog,
   DialogContent,
@@ -38,13 +38,17 @@ export function AuthComponent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+    supabase.auth
+      .getUser()
+      .then(({ data: { user } }: { data: { user: User | null } }) => setUser(user));
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    } = supabase.auth.onAuthStateChange(
+      (_event: Parameters<typeof supabase.auth.onAuthStateChange>[0], session: Session | null) => {
+        setUser(session?.user ?? null);
+      }
+    );
 
     return () => subscription.unsubscribe();
   }, [supabase]);

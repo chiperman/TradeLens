@@ -20,13 +20,14 @@ export interface Calculation {
 /**
  * 交易历史记录 Hook
  */
+const supabase = createClient();
+
 export function useTradeHistory() {
-  const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, [supabase]);
+    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => setUser(data.user));
+  }, []);
 
   const {
     data: history,

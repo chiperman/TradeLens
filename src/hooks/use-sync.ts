@@ -14,8 +14,9 @@ interface SyncState {
   error: string | null;
 }
 
+const supabase = createClient();
+
 export function useSync() {
-  const supabase = createClient();
   const [state, setState] = useState<SyncState>({
     syncing: false,
     exchange: null,

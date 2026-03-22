@@ -166,8 +166,10 @@ export default function CalculatorPage() {
   const { assets, loading: isAssetsLoading } = useAssets();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
-  }, [supabase]);
+    supabase.auth
+      .getUser()
+      .then(({ data: { user } }: { data: { user: User | null } }) => setUser(user));
+  }, []);
 
   // --- Calculations ---
 

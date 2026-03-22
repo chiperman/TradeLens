@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
 import type { FundFlow, FundFlowFormData } from "@/types/transaction";
 import { useDataQuery } from "./base/use-data-query";
@@ -9,13 +9,16 @@ import type { User } from "@supabase/supabase-js";
 /**
  * 资金流水 CRUD Hook
  */
+const supabase = createClient();
+
 export function useFundFlows() {
-  const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, [supabase]);
+    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => setUser(data.user));
+  }, []);
+
+  const order = useMemo(() => ({ column: "transacted_at", ascending: false }), []);
 
   const {
     data: fundFlows,
@@ -24,7 +27,7 @@ export function useFundFlows() {
     refresh,
   } = useDataQuery<FundFlow>({
     table: "fund_flows",
-    order: { column: "transacted_at", ascending: false },
+    order,
     enabled: !!user,
   });
 

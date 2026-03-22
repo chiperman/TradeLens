@@ -22,6 +22,9 @@ export function useDataQuery<T>(options: UseDataQueryOptions) {
 
   const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
 
+  const orderKey = useMemo(() => JSON.stringify(order), [order]);
+  const rangeKey = useMemo(() => JSON.stringify(range), [range]);
+
   const fetchData = useCallback(async () => {
     if (enabled === false) return;
     setLoading(true);
@@ -66,7 +69,8 @@ export function useDataQuery<T>(options: UseDataQueryOptions) {
     } finally {
       setLoading(false);
     }
-  }, [table, select, enabled, filters, order, range, limit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, select, enabled, filtersKey, orderKey, rangeKey, limit]);
 
   useEffect(() => {
     fetchData();

@@ -15,8 +15,9 @@ const DEFAULT_FEE_CONFIG: FeeConfig = {
   crypto: { type: "percentage", rate: 0.001, currency: "USDT" },
 };
 
+const supabase = createClient();
+
 export function useSettings() {
-  const supabase = createClient();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export function useSettings() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     fetchSettings();

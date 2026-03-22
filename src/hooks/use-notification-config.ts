@@ -10,8 +10,9 @@ export interface NotificationConfig {
   alert_threshold_percent: number;
 }
 
+const supabase = createClient();
+
 export function useNotificationConfig() {
-  const supabase = createClient();
   const [config, setConfig] = useState<NotificationConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +51,7 @@ export function useNotificationConfig() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     fetchConfig();

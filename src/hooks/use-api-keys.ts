@@ -13,8 +13,9 @@ export interface ApiKey {
   created_at: string;
 }
 
+const supabase = createClient();
+
 export function useApiKeys() {
-  const supabase = createClient();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +35,7 @@ export function useApiKeys() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   const saveKey = async (
     exchange: string,

@@ -13,8 +13,9 @@ export interface NotificationLog {
   created_at: string;
 }
 
+const supabase = createClient();
+
 export function useNotificationLogs() {
-  const supabase = createClient();
   const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export function useNotificationLogs() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     fetchLogs();

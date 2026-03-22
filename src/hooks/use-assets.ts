@@ -10,8 +10,9 @@ export interface AssetSummary {
   average_price: number;
 }
 
+const supabase = createClient();
+
 export function useAssets() {
-  const supabase = createClient();
   const [assets, setAssets] = useState<AssetSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,26 +27,24 @@ export function useAssets() {
       setAssets(data);
     }
     setLoading(false);
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAssets();
-    
+
     // 监听交易表变更，自动刷新资产汇总
     const channel = supabase
       .channel("assets-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "transactions" },
-        () => fetchAssets()
+      .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () =>
+        fetchAssets()
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchAssets, supabase]);
+  }, [fetchAssets]);
 
   return { assets, loading, refresh: fetchAssets };
 }

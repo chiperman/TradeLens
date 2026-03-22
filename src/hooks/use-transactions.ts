@@ -18,8 +18,9 @@ const PAGE_SIZE = 20;
 /**
  * 交易记录 CRUD Hook
  */
+const supabase = createClient();
+
 export function useTransactions(initialFilter?: TransactionFilter) {
-  const supabase = createClient();
   const { user: contextUser } = useUser();
   const [user, setUser] = useState<User | null>(null);
   const [filter, setFilter] = useState<TransactionFilter>(initialFilter ?? {});
@@ -43,6 +44,11 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     return { from, to };
   }, [pagination.page, pagination.pageSize]);
 
+  const order = useMemo(
+    () => ({ column: sort.column, ascending: sort.direction === "asc" }),
+    [sort.column, sort.direction]
+  );
+
   const {
     data: transactions,
     count: totalCount,
@@ -51,7 +57,7 @@ export function useTransactions(initialFilter?: TransactionFilter) {
   } = useDataQuery<Transaction>({
     table: "transactions",
     filters: filter,
-    order: { column: sort.column, ascending: sort.direction === "asc" },
+    order,
     range,
     enabled: !!user,
   });
