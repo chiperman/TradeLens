@@ -310,6 +310,8 @@
     "emptyHistory": "No notification history",
     "clearHistory": "Clear History",
     "clearSuccess": "Push history cleared",
-    "clearFailed": "Failed to clear history"
+    "clearFailed": "Failed to clear history",
+    "loadMore": "Load More",
+    "noMore": "No more records"
   }
 }

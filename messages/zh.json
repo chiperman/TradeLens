@@ -312,6 +312,8 @@
     "clearHistory": "清空记录",
     "clearSuccess": "推送历史已清空",
     "clearFailed": "清空记录失败",
-    "loading": "加载推送配置..."
+    "loading": "加载推送配置...",
+    "loadMore": "加载更多",
+    "noMore": "已加载全部"
   }
 }

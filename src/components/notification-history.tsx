@@ -8,10 +8,12 @@ import { Loader2, Trash2, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { sileo } from "sileo";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number }) {
   const t = useTranslations("Notifications");
-  const { logs, loading, clearLogs, refresh } = useNotificationLogs();
+  const { logs, loading, clearLogs, refresh, hasMore, loadingMore, loadMoreLogs } =
+    useNotificationLogs();
   const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
       await clearLogs();
       sileo.success({ title: t("clearSuccess") });
       refresh();
-    } catch (err) {
+    } catch {
       sileo.error({ title: t("clearFailed") });
     } finally {
       setIsClearing(false);
@@ -82,35 +84,60 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
             {t("emptyHistory", { fallback: "No notification history" })}
           </div>
         ) : (
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-            {logs.map((log) => (
-              <div
-                key={log.id}
-                className="flex gap-4 p-4 rounded-xl border bg-slate-50/50 hover:bg-white hover:shadow-sm transition-all"
-              >
-                <div className="mt-0.5">
-                  {log.status === "success" ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-500" />
-                  )}
-                </div>
-                <div className="space-y-1 flex-1">
-                  <div className="flex justify-between items-start gap-2">
-                    <p className="font-semibold text-sm text-slate-900">{log.title}</p>
-                    <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                      {format(new Date(log.created_at), "MM-dd HH:mm")}
-                    </span>
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 pb-4">
+            <AnimatePresence initial={false}>
+              {logs.map((log) => (
+                <motion.div
+                  layout
+                  key={log.id}
+                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="flex gap-4 p-4 rounded-xl border bg-slate-50/50 hover:bg-white hover:shadow-sm"
+                >
+                  <div className="mt-0.5">
+                    {log.status === "success" ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-500" />
+                    )}
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed">{log.body}</p>
-                  {log.error_message && (
-                    <p className="text-[10px] text-red-500 bg-red-50 p-1.5 rounded mt-2">
-                      {log.error_message}
-                    </p>
-                  )}
-                </div>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex justify-between items-start gap-2">
+                      <p className="font-semibold text-sm text-slate-900">{log.title}</p>
+                      <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                        {format(new Date(log.created_at), "MM-dd HH:mm")}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">{log.body}</p>
+                    {log.error_message && (
+                      <p className="text-[10px] text-red-500 bg-red-50 p-1.5 rounded mt-2">
+                        {log.error_message}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {logs.length > 0 && hasMore && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={loadMoreLogs}
+                disabled={loadingMore}
+                className="w-full mt-2 text-slate-500 hover:text-slate-700"
+              >
+                {loadingMore && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {t("loadMore", { fallback: "Load More" })}
+              </Button>
+            )}
+            {logs.length > 0 && !hasMore && (
+              <div className="text-center text-xs text-slate-400 py-4 mt-2">
+                {t("noMore", { fallback: "No more records" })}
               </div>
-            ))}
+            )}
           </div>
         )}
       </CardContent>
