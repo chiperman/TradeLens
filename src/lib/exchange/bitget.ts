@@ -79,31 +79,67 @@ export class BitgetAdapter implements ExchangeAdapter {
   readonly name = "bitget" as const;
 
   async fetchTrades(creds: ExchangeCredentials, params: SyncParams): Promise<NormalizedTrade[]> {
-    const apiParams: Record<string, string> = { limit: "500" };
-    if (params.startTime) apiParams.startTime = String(params.startTime);
-    if (params.endTime) apiParams.endTime = String(params.endTime);
+    let symbols = params.symbols;
 
-    const raw = await authFetch<BitgetRawFill[]>(
-      "GET",
-      "/api/v2/spot/trade/fills",
-      creds,
-      apiParams
-    );
+    // 如果未指定交易对，尝试根据账户余额自动发现
+    if (!symbols || symbols.length === 0) {
+      try {
+        const assets = await authFetch<{ coin: string; available: string; frozen: string }[]>(
+          "GET",
+          "/api/v2/spot/account/assets",
+          creds
+        );
+        symbols = (assets || [])
+          .filter((a) => parseFloat(a.available) > 0 || parseFloat(a.frozen) > 0)
+          .filter((a) => a.coin !== "USDT" && a.coin !== "USDC")
+          .map((a) => `${a.coin}USDT`);
 
-    return (raw || []).map((t) => ({
-      symbol: t.symbol,
-      assetClass: "crypto" as const,
-      exchange: "bitget" as const,
-      side: t.side.toUpperCase() as "BUY" | "SELL",
-      price: parseFloat(t.price),
-      quantity: parseFloat(t.size),
-      quoteQuantity: parseFloat(t.amount),
-      commission: parseFloat(t.fees),
-      commissionAsset: t.feeCcy,
-      externalTradeId: t.tradeId,
-      externalOrderId: t.orderId,
-      transactedAt: new Date(parseInt(t.cTime)),
-    }));
+        if (symbols.length === 0) {
+          symbols = ["BTCUSDT", "ETHUSDT"];
+        }
+      } catch (e) {
+        console.error("Failed to fetch symbols from Bitget account", e);
+        symbols = ["BTCUSDT", "ETHUSDT"];
+      }
+    }
+
+    const allTrades: NormalizedTrade[] = [];
+
+    for (const symbol of symbols) {
+      try {
+        const apiParams: Record<string, string> = { symbol, limit: "500" };
+        if (params.startTime) apiParams.startTime = String(params.startTime);
+        if (params.endTime) apiParams.endTime = String(params.endTime);
+
+        const raw = await authFetch<BitgetRawFill[]>(
+          "GET",
+          "/api/v2/spot/trade/fills",
+          creds,
+          apiParams
+        );
+
+        const mapped = (raw || []).map((t) => ({
+          symbol: t.symbol,
+          assetClass: "crypto" as const,
+          exchange: "bitget" as const,
+          side: t.side.toUpperCase() as "BUY" | "SELL",
+          price: parseFloat(t.price),
+          quantity: parseFloat(t.size),
+          quoteQuantity: parseFloat(t.amount),
+          commission: parseFloat(t.fees),
+          commissionAsset: t.feeCcy,
+          externalTradeId: t.tradeId,
+          externalOrderId: t.orderId,
+          transactedAt: new Date(parseInt(t.cTime)),
+        }));
+
+        allTrades.push(...mapped);
+      } catch (err) {
+        console.warn(`Failed to fetch trades for ${symbol} on Bitget`, err);
+      }
+    }
+
+    return allTrades;
   }
 
   async fetchDeposits(creds: ExchangeCredentials): Promise<NormalizedFundFlow[]> {

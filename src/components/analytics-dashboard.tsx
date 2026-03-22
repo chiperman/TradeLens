@@ -12,6 +12,10 @@ const AllocationChart = dynamic(() => import("@/components/allocation-chart"), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-slate-100 w-full h-full rounded-2xl" />,
 });
+const MonthlyPnlChart = dynamic(() => import("@/components/charts/monthly-pnl-chart"), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-slate-100 w-full h-full rounded-2xl" />,
+});
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   TrendingUp,
@@ -53,7 +57,7 @@ function KpiCard({
 }
 
 export function AnalyticsDashboard() {
-  const { timeSeries, loading: isTimeLoading } = useAnalytics();
+  const { timeSeries, monthlySeries, loading: isTimeLoading } = useAnalytics();
   const { assets, loading: isAssetsLoading } = useAssets();
   const { stats, loading: isStatsLoading } = usePortfolioStats();
 
@@ -134,7 +138,7 @@ export function AnalyticsDashboard() {
                 <TrendingUp className="w-3.5 h-3.5 text-primary" />
               </div>
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                累计盈亏曲线 (P&L Curve)
+                累计盈亏对比 (vs Benchmark)
               </CardTitle>
             </div>
             <span className="text-[8px] font-black py-0.5 px-2 bg-slate-100 text-slate-400 rounded-full tracking-widest uppercase">
@@ -144,6 +148,24 @@ export function AnalyticsDashboard() {
         </CardHeader>
         <CardContent className="h-[280px] w-full pt-6 px-4">
           <PerformanceChart data={timeSeries} />
+        </CardContent>
+      </Card>
+
+      {/* 月度盈亏柱状图 */}
+      <Card className="shadow-2xl shadow-slate-200/50 border-none bg-white/80 backdrop-blur-sm overflow-hidden">
+        <div className="h-1 bg-amber-500/20 w-full" />
+        <CardHeader className="pb-2 pt-6 px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-amber-50 rounded-lg border border-amber-100">
+              <BarChart3 className="w-3.5 h-3.5 text-amber-500" />
+            </div>
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+              月度盈亏分布 (Monthly P&L)
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="h-[250px] w-full pt-6 px-4">
+          <MonthlyPnlChart data={monthlySeries} />
         </CardContent>
       </Card>
 

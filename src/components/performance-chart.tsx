@@ -56,12 +56,23 @@ export default function PerformanceChart({ data }: PerformanceChartProps) {
             boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.05)",
             fontWeight: "bold",
           }}
-          itemStyle={{ color: "#3b82f6", padding: "2px 0" }}
+          itemStyle={{ padding: "2px 0" }}
           cursor={{ stroke: "#3b82f6", strokeWidth: 1, strokeDasharray: "4 4" }}
         />
         <Area
           type="monotone"
+          dataKey="benchmarkProfit"
+          name="S&P 500 (Benchmark)"
+          stroke="#94a3b8"
+          strokeWidth={2}
+          strokeDasharray="5 5"
+          fill="transparent"
+          animationDuration={1500}
+        />
+        <Area
+          type="monotone"
           dataKey="cumulativeProfit"
+          name="个人 P&L"
           stroke="#3b82f6"
           strokeWidth={3}
           fillOpacity={1}

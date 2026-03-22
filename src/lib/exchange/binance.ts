@@ -74,32 +74,60 @@ export class BinanceAdapter implements ExchangeAdapter {
   readonly name = "binance" as const;
 
   async fetchTrades(creds: ExchangeCredentials, params: SyncParams): Promise<NormalizedTrade[]> {
-    const symbols = params.symbols || ["BTCUSDT", "ETHUSDT"];
+    let symbols = params.symbols;
+
+    // 如果未指定交易对，则尝试根据账户余额自动发现
+    if (!symbols || symbols.length === 0) {
+      try {
+        const account = await authFetch<{
+          balances: { asset: string; free: string; locked: string }[];
+        }>("/api/v3/account", creds);
+        // 找出有余额的资产，并生成常见的 USDT 交易对
+        symbols = account.balances
+          .filter((b) => parseFloat(b.free) > 0 || parseFloat(b.locked) > 0)
+          .filter((b) => b.asset !== "USDT" && b.asset !== "FDUSD") // 排除计价货币
+          .map((b) => `${b.asset}USDT`);
+
+        // 加上一些主流交易对作为兜底
+        if (symbols.length === 0) {
+          symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT"];
+        }
+      } catch (e) {
+        console.error("Failed to fetch symbols from Binance account, falling back to defaults", e);
+        symbols = ["BTCUSDT", "ETHUSDT"];
+      }
+    }
+
     const allTrades: NormalizedTrade[] = [];
 
     for (const symbol of symbols) {
-      const apiParams: Record<string, string | number> = { symbol, limit: 1000 };
-      if (params.startTime) apiParams.startTime = params.startTime;
-      if (params.endTime) apiParams.endTime = params.endTime;
+      try {
+        const apiParams: Record<string, string | number> = { symbol, limit: 1000 };
+        if (params.startTime) apiParams.startTime = params.startTime;
+        if (params.endTime) apiParams.endTime = params.endTime;
 
-      const raw = await authFetch<BinanceRawTrade[]>("/api/v3/myTrades", creds, apiParams);
+        const raw = await authFetch<BinanceRawTrade[]>("/api/v3/myTrades", creds, apiParams);
 
-      const mapped = raw.map((t) => ({
-        symbol: t.symbol,
-        assetClass: "crypto" as const,
-        exchange: "binance" as const,
-        side: (t.isBuyer ? "BUY" : "SELL") as "BUY" | "SELL",
-        price: parseFloat(t.price),
-        quantity: parseFloat(t.qty),
-        quoteQuantity: parseFloat(t.quoteQty),
-        commission: parseFloat(t.commission),
-        commissionAsset: t.commissionAsset,
-        externalTradeId: String(t.id),
-        externalOrderId: String(t.orderId),
-        transactedAt: new Date(t.time),
-      }));
+        const mapped = raw.map((t) => ({
+          symbol: t.symbol,
+          assetClass: "crypto" as const,
+          exchange: "binance" as const,
+          side: (t.isBuyer ? "BUY" : "SELL") as "BUY" | "SELL",
+          price: parseFloat(t.price),
+          quantity: parseFloat(t.qty),
+          quoteQuantity: parseFloat(t.quoteQty),
+          commission: parseFloat(t.commission),
+          commissionAsset: t.commissionAsset,
+          externalTradeId: String(t.id),
+          externalOrderId: String(t.orderId),
+          transactedAt: new Date(t.time),
+        }));
 
-      allTrades.push(...mapped);
+        allTrades.push(...mapped);
+      } catch (err) {
+        // 部分交易对可能不存在（例如生成的 XXXUSDT 可能并不是有效交易对）
+        console.warn(`Failed to fetch trades for ${symbol} on Binance`, err);
+      }
     }
 
     return allTrades;

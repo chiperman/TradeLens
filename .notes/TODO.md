@@ -16,5 +16,5 @@
 
 ## 📅 Upcoming (Phase 8+)
 
-- [ ] **[Adapter]** 增加更多加密货币交易所适配器 (OKX, Bitget)
-- [ ] **[Analytics]** 增强资产分析图表与多币种对比
+- [x] **[Adapter]** 增加更多加密货币交易所适配器 (OKX, Bitget) 与动态发现
+- [x] **[Analytics]** 增强资产分析图表 (基准对比、月度损益)
