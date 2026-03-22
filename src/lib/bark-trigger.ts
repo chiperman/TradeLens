@@ -1,10 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Initialize a Supabase admin client to access user data bypassing RLS
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Helper to initialize a Supabase admin client lazily to avoid build-time errors
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Supabase admin credentials missing");
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 export async function sendBarkNotification(
   userId: string,
@@ -12,6 +18,8 @@ export async function sendBarkNotification(
   body: string,
   icon?: string
 ) {
+  const supabaseAdmin = getSupabaseAdmin();
+
   try {
     // 1. Fetch user's notification config
     const { data: config, error } = await supabaseAdmin
@@ -61,16 +69,16 @@ export async function sendBarkNotification(
     console.error("Error sending Bark notification:", err);
 
     // Attempt to log the error if DB is reachable
-    const { error: insertError } = await supabaseAdmin.from("notification_logs").insert({
-      user_id: userId,
-      title,
-      body,
-      status: "failed",
-      error_message: err instanceof Error ? err.message : "Unknown error",
-    });
-
-    if (insertError) {
-      console.error("Failed to log notification error:", insertError);
+    try {
+      await supabaseAdmin.from("notification_logs").insert({
+        user_id: userId,
+        title,
+        body,
+        status: "failed",
+        error_message: err instanceof Error ? err.message : "Unknown error",
+      });
+    } catch (logErr) {
+      console.error("Failed to log notification error:", logErr);
     }
 
     return false;
