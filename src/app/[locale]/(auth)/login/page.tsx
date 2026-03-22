@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
+import { sileo } from "sileo";
 import { useRouter } from "@/i18n/routing";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,8 @@ export default function LoginPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      alert(error.message);
+      sileo.error({ title: error.message });
+      setLoading(false);
     } else {
       router.push("/");
     }
@@ -39,19 +41,15 @@ export default function LoginPage() {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    if (error) alert(error.message);
+    if (error) sileo.error({ title: error.message });
     setLoading(false);
   };
 
   return (
     <Card className="border-none shadow-2xl shadow-primary/5 bg-card/80 backdrop-blur-sm">
       <CardHeader className="space-y-1 text-center pb-2">
-        <CardTitle className="text-xl font-bold tracking-tight">
-          {t("loginTitle")}
-        </CardTitle>
-        <CardDescription className="text-xs">
-          {t("loginSubtitle")}
-        </CardDescription>
+        <CardTitle className="text-xl font-bold tracking-tight">{t("loginTitle")}</CardTitle>
+        <CardDescription className="text-xs">{t("loginSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
         <form onSubmit={handleSignIn} className="space-y-4">
@@ -82,11 +80,7 @@ export default function LoginPage() {
               className="h-10"
             />
           </div>
-          <Button
-            type="submit"
-            className="w-full h-10 font-semibold"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full h-10 font-semibold" disabled={loading}>
             {loading ? t("loggingIn") : t("loginButton")}
           </Button>
         </form>
@@ -96,9 +90,7 @@ export default function LoginPage() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              {t("orContinueWith")}
-            </span>
+            <span className="bg-card px-2 text-muted-foreground">{t("orContinueWith")}</span>
           </div>
         </div>
 
@@ -114,10 +106,7 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-muted-foreground">
           {t("noAccount")}{" "}
-          <Link
-            href="/register"
-            className="font-semibold text-primary hover:underline"
-          >
+          <Link href="/register" className="font-semibold text-primary hover:underline">
             {t("goToRegister")}
           </Link>
         </p>

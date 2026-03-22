@@ -263,6 +263,8 @@
     "testConnection": "Test Connection",
     "connectionSuccess": "Connected",
     "connectionFailed": "Connection failed",
+    "saveFailed": "Save failed",
+    "deleteFailed": "Delete failed",
     "SyncHistory": {
       "title": "Sync History",
       "subtitle": "Recent 50 automated exchange synchronization records",

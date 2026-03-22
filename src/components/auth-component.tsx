@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User as UserIcon, LogOut, Settings, LogIn, RefreshCw, Github } from "lucide-react";
 import { SettingsModal } from "./settings-modal";
+import { sileo } from "sileo";
 
 export function AuthComponent() {
   const supabase = createClient();
@@ -39,7 +40,9 @@ export function AuthComponent() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
@@ -50,7 +53,7 @@ export function AuthComponent() {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert(error.message);
+    if (error) sileo.error({ title: error.message });
     else setIsOpen(false);
     setLoading(false);
   };
@@ -59,9 +62,9 @@ export function AuthComponent() {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signUp({ email, password });
-    if (error) alert(error.message);
+    if (error) sileo.error({ title: error.message });
     else {
-      alert("验证邮件已发送，请检查邮箱后登录");
+      sileo.success({ title: "验证邮件已发送，请检查邮箱后登录" });
       setIsOpen(false);
     }
     setLoading(false);
@@ -79,27 +82,29 @@ export function AuthComponent() {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    if (error) alert(error.message);
+    if (error) sileo.error({ title: error.message });
     setLoading(false);
   };
 
   const handleSync = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) throw new Error("请先登录");
 
       const response = await fetch("/api/binance/sync", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
       const data = await response.json();
       if (data.error) throw new Error(data.error);
-      alert(`同步成功！共同步 ${data.count} 笔交易记录。`);
+      sileo.success({ title: `同步成功！共同步 ${data.count} 笔交易记录。` });
     } catch (err) {
-      alert(err instanceof Error ? err.message : "同步失败");
+      sileo.error({ title: err instanceof Error ? err.message : "同步失败" });
     } finally {
       setLoading(false);
     }
@@ -143,27 +148,51 @@ export function AuthComponent() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 h-9 px-4 rounded-full border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all text-[10px] font-black uppercase tracking-widest">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 h-9 px-4 rounded-full border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all text-[10px] font-black uppercase tracking-widest"
+        >
           <LogIn className="w-3.5 h-3.5" />
           登录 / 注册
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[400px] border-none shadow-2xl rounded-[2rem] p-8 bg-white/95 backdrop-blur-xl">
         <DialogHeader className="space-y-3">
-          <DialogTitle className="text-2xl font-black tracking-tighter text-slate-900">加入 TradeLens</DialogTitle>
+          <DialogTitle className="text-2xl font-black tracking-tighter text-slate-900">
+            加入 TradeLens
+          </DialogTitle>
           <DialogDescription className="text-xs font-medium text-slate-400">
             登录以同步您的计算历史和交易所 API 配置。
           </DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="login" className="w-full mt-6">
           <TabsList className="grid w-full grid-cols-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50">
-            <TabsTrigger value="login" className="text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">登录</TabsTrigger>
-            <TabsTrigger value="register" className="text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">注册</TabsTrigger>
+            <TabsTrigger
+              value="login"
+              className="text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              登录
+            </TabsTrigger>
+            <TabsTrigger
+              value="register"
+              className="text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              注册
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="login" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <TabsContent
+            value="login"
+            className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+          >
             <form onSubmit={handleSignIn} className="space-y-5 pt-6">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">邮箱</Label>
+                <Label
+                  htmlFor="email"
+                  className="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+                >
+                  邮箱
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -175,7 +204,12 @@ export function AuthComponent() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">密码</Label>
+                <Label
+                  htmlFor="password"
+                  className="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+                >
+                  密码
+                </Label>
                 <Input
                   id="password"
                   type="password"
@@ -185,7 +219,11 @@ export function AuthComponent() {
                   className="rounded-xl border-slate-200 h-11 focus-visible:ring-blue-500/20"
                 />
               </div>
-              <Button type="submit" className="w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-slate-200" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-slate-200"
+                disabled={loading}
+              >
                 {loading ? "登录中..." : "登录系统"}
               </Button>
               <div className="relative my-6">
@@ -196,11 +234,11 @@ export function AuthComponent() {
                   <span className="bg-white px-4 text-slate-300 tracking-widest">Social Login</span>
                 </div>
               </div>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full h-11 rounded-xl gap-3 border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all" 
-                onClick={handleGitHubLogin} 
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 rounded-xl gap-3 border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+                onClick={handleGitHubLogin}
                 disabled={loading}
               >
                 <Github className="w-4 h-4" />
@@ -208,10 +246,18 @@ export function AuthComponent() {
               </Button>
             </form>
           </TabsContent>
-          <TabsContent value="register" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <TabsContent
+            value="register"
+            className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+          >
             <form onSubmit={handleSignUp} className="space-y-5 pt-6">
               <div className="space-y-2">
-                <Label htmlFor="reg-email" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">邮箱</Label>
+                <Label
+                  htmlFor="reg-email"
+                  className="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+                >
+                  邮箱
+                </Label>
                 <Input
                   id="reg-email"
                   type="email"
@@ -223,7 +269,12 @@ export function AuthComponent() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reg-password" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">密码</Label>
+                <Label
+                  htmlFor="reg-password"
+                  className="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+                >
+                  密码
+                </Label>
                 <Input
                   id="reg-password"
                   type="password"
@@ -233,7 +284,11 @@ export function AuthComponent() {
                   className="rounded-xl border-slate-200 h-11 focus-visible:ring-blue-500/20"
                 />
               </div>
-              <Button type="submit" className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-500 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-blue-100" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-500 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-blue-100"
+                disabled={loading}
+              >
                 {loading ? "注册中..." : "创建新账户"}
               </Button>
               <div className="relative my-6">
@@ -241,14 +296,16 @@ export function AuthComponent() {
                   <span className="w-full border-t border-slate-100" />
                 </div>
                 <div className="relative flex justify-center text-[9px] font-black uppercase">
-                  <span className="bg-white px-4 text-slate-300 tracking-widest">Social Registration</span>
+                  <span className="bg-white px-4 text-slate-300 tracking-widest">
+                    Social Registration
+                  </span>
                 </div>
               </div>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full h-11 rounded-xl gap-3 border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all" 
-                onClick={handleGitHubLogin} 
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 rounded-xl gap-3 border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+                onClick={handleGitHubLogin}
                 disabled={loading}
               >
                 <Github className="w-4 h-4" />

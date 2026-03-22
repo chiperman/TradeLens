@@ -263,6 +263,8 @@
     "testConnection": "测试连接",
     "connectionSuccess": "连接成功",
     "connectionFailed": "连接失败",
+    "saveFailed": "保存失败",
+    "deleteFailed": "删除失败",
     "SyncHistory": {
       "title": "同步日志",
       "subtitle": "最近 50 次交易所自动化对账记录",

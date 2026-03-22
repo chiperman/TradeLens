@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useApiKeys } from "@/hooks/use-api-keys";
+import { sileo } from "sileo";
 import { EXCHANGE_LABELS, EXCHANGE_NAMES } from "@/lib/exchange/types";
 import type { ExchangeName } from "@/lib/exchange/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,8 +43,9 @@ export default function ApiKeysPage() {
         form.passphrase || undefined
       );
       setDialogOpen(false);
+      sileo.success({ title: t("apiKeySaved") });
     } catch (err) {
-      console.error("保存失败:", err);
+      sileo.error({ title: err instanceof Error ? err.message : t("saveFailed") });
     } finally {
       setSaving(false);
     }
@@ -55,8 +57,14 @@ export default function ApiKeysPage() {
     try {
       const connected = await testConnection(id);
       setTestResult((prev) => ({ ...prev, [id]: connected }));
-    } catch {
+      if (connected) {
+        sileo.success({ title: t("connectionSuccessful") });
+      } else {
+        sileo.error({ title: t("connectionFailed") });
+      }
+    } catch (err) {
       setTestResult((prev) => ({ ...prev, [id]: false }));
+      sileo.error({ title: err instanceof Error ? err.message : t("connectionFailed") });
     } finally {
       setTestingId(null);
     }
@@ -70,8 +78,9 @@ export default function ApiKeysPage() {
         delete next[id];
         return next;
       });
+      sileo.success({ title: t("apiKeyDeleted") });
     } catch (err) {
-      console.error("删除失败:", err);
+      sileo.error({ title: err instanceof Error ? err.message : t("deleteFailed") });
     }
   };
 

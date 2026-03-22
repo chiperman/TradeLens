@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
+import { sileo } from "sileo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const t = useTranslations("Auth");
   const supabase = createClient();
   const [email, setEmail] = useState("");
@@ -22,9 +24,10 @@ export default function RegisterPage() {
     setLoading(true);
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) {
-      alert(error.message);
+      sileo.error({ title: error.message });
     } else {
-      alert(t("verifyEmail"));
+      sileo.success({ title: t("verifyEmail") });
+      router.push("/login");
     }
     setLoading(false);
   };
@@ -37,19 +40,15 @@ export default function RegisterPage() {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    if (error) alert(error.message);
+    if (error) sileo.error({ title: error.message });
     setLoading(false);
   };
 
   return (
     <Card className="border-none shadow-2xl shadow-primary/5 bg-card/80 backdrop-blur-sm">
       <CardHeader className="space-y-1 text-center pb-2">
-        <CardTitle className="text-xl font-bold tracking-tight">
-          {t("registerTitle")}
-        </CardTitle>
-        <CardDescription className="text-xs">
-          {t("registerSubtitle")}
-        </CardDescription>
+        <CardTitle className="text-xl font-bold tracking-tight">{t("registerTitle")}</CardTitle>
+        <CardDescription className="text-xs">{t("registerSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
         <form onSubmit={handleSignUp} className="space-y-4">
@@ -80,11 +79,7 @@ export default function RegisterPage() {
               className="h-10"
             />
           </div>
-          <Button
-            type="submit"
-            className="w-full h-10 font-semibold"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full h-10 font-semibold" disabled={loading}>
             {loading ? t("registering") : t("registerButton")}
           </Button>
         </form>
@@ -94,9 +89,7 @@ export default function RegisterPage() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              {t("orContinueWith")}
-            </span>
+            <span className="bg-card px-2 text-muted-foreground">{t("orContinueWith")}</span>
           </div>
         </div>
 
@@ -112,10 +105,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-xs text-muted-foreground">
           {t("hasAccount")}{" "}
-          <Link
-            href="/login"
-            className="font-semibold text-primary hover:underline"
-          >
+          <Link href="/login" className="font-semibold text-primary hover:underline">
             {t("goToLogin")}
           </Link>
         </p>

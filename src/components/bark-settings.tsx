@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Bell, BellRing, Link2, Send } from "lucide-react";
 import { SensitiveInput } from "@/components/ui/sensitive-input";
+import { sileo } from "sileo";
 
 export function BarkSettings() {
   const t = useTranslations("Notifications");
@@ -42,9 +43,9 @@ export function BarkSettings() {
         is_enabled: isEnabled,
         alert_threshold_percent: parseFloat(threshold) || 5.0,
       });
-      alert(t("saveSuccess"));
+      sileo.success({ title: t("saveSuccess") });
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Save failed");
+      sileo.error({ title: err instanceof Error ? err.message : "Save failed" });
     } finally {
       setSaving(false);
     }
@@ -57,9 +58,9 @@ export function BarkSettings() {
         bark_server_url: serverUrl,
         bark_device_key: deviceKey,
       });
-      alert(t("testSuccess"));
+      sileo.success({ title: t("testSuccess") });
     } catch (err) {
-      alert(err instanceof Error ? err.message : t("testFailed"));
+      sileo.error({ title: err instanceof Error ? err.message : t("testFailed") });
     } finally {
       setTesting(false);
     }

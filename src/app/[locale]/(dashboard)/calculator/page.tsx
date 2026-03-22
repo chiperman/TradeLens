@@ -14,6 +14,7 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTradeHistory } from "@/hooks/use-trade-history";
 import { useExchangeRate } from "@/hooks/use-exchange-rate";
 import { useAssets } from "@/hooks/use-assets";
+import { sileo } from "sileo";
 import { createClient } from "@/lib/supabase";
 import { type User } from "@supabase/supabase-js";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -228,21 +229,26 @@ export default function CalculatorPage() {
     customData?: { buyPrice?: number; profit?: number; fees?: number }
   ) => {
     if (!user) {
-      alert(tAuth("loginRequired") || "请先登录以保存记录");
+      sileo.error({ title: tAuth("loginRequired") || "请先登录以保存记录" });
       return;
     }
 
-    const res = await saveCalculation({
+    const data = {
       buy_price: customData?.buyPrice ?? 0,
       sell_price: parseFloat(sellPrice),
       quantity: parseFloat(quantity),
       profit: customData?.profit ?? 0,
       fees: customData?.fees ?? 0,
       type,
-    });
+    };
 
-    if (res.error) alert(res.error);
-    else alert(tCalc("saveSuccess") || "已保存至历史账本");
+    const res = await saveCalculation(data);
+    if (res.error) {
+      const errorMessage = typeof res.error === "string" ? res.error : res.error.message;
+      sileo.error({ title: errorMessage });
+    } else {
+      sileo.success({ title: tCalc("saveSuccess") || "已保存至历史账本" });
+    }
   };
 
   const handleSymbolChange = (val: string) => {

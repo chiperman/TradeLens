@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck, Key, Lock, Plus } from "lucide-react";
 import { SensitiveInput } from "@/components/ui/sensitive-input";
+import { sileo } from "sileo";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -36,9 +37,9 @@ export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
       setApiSecret("");
       setLabel("");
       setIsAdding(false);
-      alert("API Key 已安全保存并加密");
+      sileo.success({ title: "API Key 已安全保存并加密" });
     } catch (err) {
-      alert(err instanceof Error ? err.message : "保存失败");
+      sileo.error({ title: err instanceof Error ? err.message : "保存失败" });
     }
   };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
+import { sileo } from "sileo";
 import * as ExcelJS from "exceljs";
 import { useDataQuery } from "./base/use-data-query";
 import type { User } from "@supabase/supabase-js";
@@ -51,7 +52,7 @@ export function useTradeHistory() {
   const exportToExcel = async () => {
     const allData = await fetchAllHistory();
     if (allData.length === 0) {
-      alert("暂无历史交易数据可供导出");
+      sileo.error({ title: "暂无历史交易数据可供导出" });
       return;
     }
 
@@ -83,7 +84,7 @@ export function useTradeHistory() {
   const exportToJSON = async () => {
     const allData = await fetchAllHistory();
     if (allData.length === 0) {
-      alert("暂无历史交易数据可供导出");
+      sileo.error({ title: "暂无历史交易数据可供导出" });
       return;
     }
 

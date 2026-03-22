@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "../globals.css";
 import { cn } from "@/lib/utils";
+import "sileo/styles.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
@@ -44,6 +45,7 @@ export async function generateMetadata({
 }
 
 import { UserProvider } from "@/providers/user-provider";
+import { Toaster } from "sileo";
 
 export default async function RootLayout({
   children,
@@ -84,6 +86,19 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <Toaster
+              position="top-right"
+              options={{
+                fill: "#171717",
+                roundness: 16,
+                styles: {
+                  title: "text-white!",
+                  description: "text-white/75!",
+                  badge: "bg-white/10!",
+                  button: "bg-white/10! hover:bg-white/15!",
+                },
+              }}
+            />
             <UserProvider>{children}</UserProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

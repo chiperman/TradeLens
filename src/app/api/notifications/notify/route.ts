@@ -27,12 +27,9 @@ export async function POST(req: Request) {
 
     const { title, body } = await req.json();
 
-    const success = await sendBarkNotification(
-      user.id,
-      title,
-      body,
-      "https://cdn-icons-png.flaticon.com/512/1041/1041916.png"
-    );
+    const success = await sendBarkNotification(user.id, title, body, {
+      icon: "https://cdn-icons-png.flaticon.com/512/1041/1041916.png",
+    });
 
     return NextResponse.json({ success });
   } catch (err) {
