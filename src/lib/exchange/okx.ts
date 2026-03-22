@@ -52,25 +52,25 @@ async function authFetch<T>(
   const timestamp = new Date().toISOString();
   const qs = new URLSearchParams(params).toString();
   const fullPath = qs ? `${path}?${qs}` : path;
-  const signature = signOkx(timestamp, method, fullPath, "", creds.apiSecret);
+  const signature = signOkx(timestamp, method, fullPath, "", creds.apiSecret!);
 
   const url = `https://www.okx.com${fullPath}`;
-  const res = await fetch(url, {
+  const response = await fetch(url.toString(), {
     method,
     headers: {
-      "OK-ACCESS-KEY": creds.apiKey,
+      "OK-ACCESS-KEY": creds.apiKey!,
       "OK-ACCESS-SIGN": signature,
       "OK-ACCESS-TIMESTAMP": timestamp,
-      "OK-ACCESS-PASSPHRASE": creds.passphrase || "",
+      "OK-ACCESS-PASSPHRASE": creds.passphrase!,
       "Content-Type": "application/json",
     },
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.msg || `OKX API ${res.status}`);
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.msg || `OKX API ${response.status}`);
   }
-  const json = await res.json();
+  const json = await response.json();
   return json.data as T;
 }
 

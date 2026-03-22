@@ -10,10 +10,11 @@
 
 ## ✅ Recently Completed
 
+- [x] 完成 Phase 7.2: Longbridge 深度集成与 PWA 支持 (OAuth, Trades Sync, App Install)
 - [x] 完成 Phase 7.1: 自动化同步 UI 与监控 (SyncHistory & Status Indicator)
 - [x] 完成 Phase 6: 性能优化 (React.lazy)、Bark 通知集成、i18n 补全
 
-## 📅 Upcoming (Phase 7.2+)
+## 📅 Upcoming (Phase 8+)
 
-- [ ] **[Adapter]** 完善 Longbridge 正式版适配器
-- [ ] **[PWA]** 支持离线查看与桌面快捷方式
+- [ ] **[Adapter]** 增加更多加密货币交易所适配器 (OKX, Bitget)
+- [ ] **[Analytics]** 增强资产分析图表与多币种对比

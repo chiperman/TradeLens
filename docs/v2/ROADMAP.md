@@ -337,6 +337,15 @@ Phase 6: 通知与优化收尾（~1 周）
 
 ---
 
+### 7.2 适配器增强与 PWA (Adapter & PWA)
+
+- [x] 实现 Longbridge OAuth 2.0 认证流与 Token 安全管理
+- [x] 补全 Longbridge 适配器核心逻辑 (交易/资金流水)
+- [x] 配置 PWA Manifest 与图标资源，支持“安装为应用”
+- [x] 集成 `@ducanh2912/next-pwa` 并优化离线体验
+
+---
+
 ## 依赖关系图
 
 ```mermaid

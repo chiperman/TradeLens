@@ -42,11 +42,20 @@ export class SyncManager {
       // 2. 初始化适配器与凭证
       const adapter = await getExchangeAdapter(exchange);
       const credentials = {
-        apiKey: decrypt(keyRecord.api_key_encrypted),
-        apiSecret: decrypt(keyRecord.api_secret_encrypted),
+        apiKey: keyRecord.api_key_encrypted ? decrypt(keyRecord.api_key_encrypted) : undefined,
+        apiSecret: keyRecord.api_secret_encrypted
+          ? decrypt(keyRecord.api_secret_encrypted)
+          : undefined,
         passphrase: keyRecord.passphrase_encrypted
           ? decrypt(keyRecord.passphrase_encrypted)
           : undefined,
+        accessToken: keyRecord.oauth_access_token_encrypted
+          ? decrypt(keyRecord.oauth_access_token_encrypted)
+          : undefined,
+        refreshToken: keyRecord.oauth_refresh_token_encrypted
+          ? decrypt(keyRecord.oauth_refresh_token_encrypted)
+          : undefined,
+        userId: userId,
       };
 
       // 3. 记录同步开始

@@ -92,9 +92,12 @@ export const EXCHANGE_LABELS: Record<ExchangeName, string> = {
 // ============================================================
 
 export interface ExchangeCredentials {
-  apiKey: string;
-  apiSecret: string;
+  apiKey?: string;
+  apiSecret?: string;
   passphrase?: string; // Bitget / OKX
+  accessToken?: string; // Longbridge OAuth
+  refreshToken?: string; // Longbridge OAuth
+  userId?: string; // Context for token management
 }
 
 export interface ExchangeAdapter {

@@ -31,6 +31,15 @@ export async function generateMetadata({
   return {
     title: t("title"),
     description: t("subtitle"),
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: t("title"),
+    },
+    formatDetection: {
+      telephone: false,
+    },
   };
 }
 

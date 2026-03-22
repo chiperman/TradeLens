@@ -53,16 +53,16 @@ async function authFetch<T>(
   const timestamp = Date.now().toString();
   const qs = new URLSearchParams(params).toString();
   const fullPath = qs ? `${path}?${qs}` : path;
-  const signature = signBitget(timestamp, method, fullPath, "", creds.apiSecret);
+  const signature = signBitget(timestamp, method, fullPath, "", creds.apiSecret!);
 
   const url = `https://api.bitget.com${fullPath}`;
   const res = await fetch(url, {
     method,
     headers: {
-      "ACCESS-KEY": creds.apiKey,
+      "ACCESS-KEY": creds.apiKey!,
       "ACCESS-SIGN": signature,
       "ACCESS-TIMESTAMP": timestamp,
-      "ACCESS-PASSPHRASE": creds.passphrase || "",
+      "ACCESS-PASSPHRASE": creds.passphrase!,
       "Content-Type": "application/json",
     },
   });

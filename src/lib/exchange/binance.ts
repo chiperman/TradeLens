@@ -56,18 +56,18 @@ async function authFetch<T>(
     ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])),
     timestamp: timestamp.toString(),
   });
-  qs.append("signature", sign(qs.toString(), creds.apiSecret));
+  qs.append("signature", sign(qs.toString(), creds.apiSecret!));
 
   const url = `https://api.binance.com${endpoint}?${qs.toString()}`;
-  const res = await fetch(url, {
-    headers: { "X-MBX-APIKEY": creds.apiKey },
+  const response = await fetch(url, {
+    headers: { "X-MBX-APIKEY": creds.apiKey! },
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.msg || `Binance API ${res.status}`);
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.msg || `Binance API ${response.status}`);
   }
-  return res.json();
+  return response.json();
 }
 
 export class BinanceAdapter implements ExchangeAdapter {
