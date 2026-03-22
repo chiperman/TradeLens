@@ -119,11 +119,16 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
                   <AnimatePresence mode="popLayout" initial={false}>
                     {logs.map((log) => (
                       <MotionTableRow
+                        layout
                         key={log.id}
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{
+                          duration: 0.3,
+                          ease: [0.32, 0.72, 0, 1],
+                          opacity: { duration: 0.2 },
+                        }}
                       >
                         <TableCell className="px-6">
                           {log.status === "success" ? (
