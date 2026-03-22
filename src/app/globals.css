@@ -126,4 +126,26 @@
   html {
     @apply font-sans;
   }
+
+  /* 所有交互元素统一使用 pointer cursor (Tailwind v4 不再默认提供) */
+  button,
+  [role="button"],
+  a[href],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="button"],
+  select,
+  summary,
+  label[for],
+  [tabindex]:not([tabindex="-1"]) {
+    cursor: pointer;
+  }
+
+  /* disabled 状态使用 not-allowed cursor */
+  [disabled],
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
