@@ -14,15 +14,7 @@ import {
 } from "@/types/transaction";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-  Trash2,
-  Filter,
-  X,
-} from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight, Pencil, Trash2, Filter, X } from "lucide-react";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -57,8 +49,7 @@ export function TransactionTable({
   const handleSort = (column: string) => {
     onSortChange({
       column,
-      direction:
-        sort.column === column && sort.direction === "desc" ? "asc" : "desc",
+      direction: sort.column === column && sort.direction === "desc" ? "asc" : "desc",
     });
   };
 
@@ -79,9 +70,7 @@ export function TransactionTable({
     });
   };
 
-  const hasActiveFilters = Object.values(filter).some(
-    (v) => v !== undefined && v !== ""
-  );
+  const hasActiveFilters = Object.values(filter).some((v) => v !== undefined && v !== "");
 
   return (
     <div className="space-y-4">
@@ -131,7 +120,8 @@ export function TransactionTable({
                   onChange={(e) =>
                     onFilterChange({
                       ...filter,
-                      asset_class: (e.target.value || undefined) as TransactionFilter["asset_class"],
+                      asset_class: (e.target.value ||
+                        undefined) as TransactionFilter["asset_class"],
                     })
                   }
                 >
@@ -281,9 +271,7 @@ export function TransactionTable({
                       <div className="flex flex-col">
                         <span className="font-semibold">{tx.symbol}</span>
                         {tx.asset_name && (
-                          <span className="text-xs text-muted-foreground">
-                            {tx.asset_name}
-                          </span>
+                          <span className="text-xs text-muted-foreground">{tx.asset_name}</span>
                         )}
                       </div>
                     </td>
@@ -298,9 +286,7 @@ export function TransactionTable({
                         {t(tx.side === "BUY" ? "buy" : "sell")}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right font-mono">
-                      {formatNumber(tx.price)}
-                    </td>
+                    <td className="py-3 px-4 text-right font-mono">{formatNumber(tx.price)}</td>
                     <td className="py-3 px-4 text-right font-mono">
                       {formatNumber(tx.quantity, 4)}
                     </td>
@@ -341,23 +327,32 @@ export function TransactionTable({
         </div>
 
         {/* 分页 */}
-        {totalPages > 1 && (
+        {totalPages > 0 && (
           <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
-            <span className="text-xs text-muted-foreground">
-              {t("page", { current: pagination.page, total: totalPages })}
-            </span>
+            <div className="text-xs text-muted-foreground">
+              {t("showingRecords", {
+                start: (pagination.page - 1) * pagination.pageSize + 1,
+                end: Math.min(pagination.page * pagination.pageSize, pagination.total),
+                total: pagination.total,
+              })}
+            </div>
             <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground mr-2">
+                {t("pageOf", { current: pagination.page, total: totalPages })}
+              </span>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
                 disabled={pagination.page <= 1}
                 onClick={() => onPageChange(pagination.page - 1)}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
                 disabled={pagination.page >= totalPages}
                 onClick={() => onPageChange(pagination.page + 1)}
               >

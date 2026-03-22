@@ -88,9 +88,9 @@ export default function PortfolioPage() {
         <div
           className={`h-1 w-full ${activeTab === "crypto" ? "bg-amber-400/50" : "bg-blue-500/50"}`}
         />
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-hidden">
           {filteredPositions.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="max-h-[600px] overflow-auto scrollbar-hide">
               <table className="w-full text-sm text-left whitespace-nowrap">
                 <thead className="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-100">
                   <tr>

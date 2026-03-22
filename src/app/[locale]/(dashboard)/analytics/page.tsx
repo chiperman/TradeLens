@@ -1,13 +1,31 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useTranslations } from "next-intl";
 import { usePortfolioStats } from "@/hooks/use-portfolio-stats";
 import { useAssets } from "@/hooks/use-assets";
-import { CumulativePnlChart } from "@/components/charts/cumulative-pnl";
-import { AssetAllocationChart } from "@/components/charts/asset-allocation";
-import { MonthlyReturnsChart } from "@/components/charts/monthly-returns";
-import { BenchmarkComparisonChart } from "@/components/charts/benchmark-comparison";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load heavy chart components
+const CumulativePnlChart = lazy(() =>
+  import("@/components/charts/cumulative-pnl").then((m) => ({ default: m.CumulativePnlChart }))
+);
+const AssetAllocationChart = lazy(() =>
+  import("@/components/charts/asset-allocation").then((m) => ({ default: m.AssetAllocationChart }))
+);
+const MonthlyReturnsChart = lazy(() =>
+  import("@/components/charts/monthly-returns").then((m) => ({ default: m.MonthlyReturnsChart }))
+);
+const BenchmarkComparisonChart = lazy(() =>
+  import("@/components/charts/benchmark-comparison").then((m) => ({
+    default: m.BenchmarkComparisonChart,
+  }))
+);
+
+// Loading component for charts
+const ChartPlaceholder = ({ height }: { height: number }) => (
+  <Skeleton className="w-full" style={{ height }} />
+);
 
 type Timeframe = "1W" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "ALL";
 
@@ -88,14 +106,23 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="lg:col-span-2">
-          <CumulativePnlChart data={filteredPnl} height={320} />
+          <Suspense fallback={<ChartPlaceholder height={320} />}>
+            <CumulativePnlChart data={filteredPnl} height={320} />
+          </Suspense>
         </div>
 
-        <AssetAllocationChart data={assets} height={280} />
-        <MonthlyReturnsChart data={stats.monthlyReturns} height={280} />
+        <Suspense fallback={<ChartPlaceholder height={280} />}>
+          <AssetAllocationChart data={assets} height={280} />
+        </Suspense>
+
+        <Suspense fallback={<ChartPlaceholder height={280} />}>
+          <MonthlyReturnsChart data={stats.monthlyReturns} height={280} />
+        </Suspense>
 
         <div className="lg:col-span-2">
-          <BenchmarkComparisonChart data={benchmarkData} height={320} />
+          <Suspense fallback={<ChartPlaceholder height={320} />}>
+            <BenchmarkComparisonChart data={benchmarkData} height={320} />
+          </Suspense>
         </div>
       </div>
     </div>

@@ -139,6 +139,8 @@
     "transactions": "Transactions",
     "fundFlows": "Fund Flows",
     "addTransaction": "Add Transaction",
+    "showingRecords": "Showing {start} to {end} of {total} records",
+    "pageOf": "Page {current} of {total}",
     "editTransaction": "Edit Transaction",
     "addFundFlow": "Add Fund Flow",
     "editFundFlow": "Edit Fund Flow",

@@ -139,6 +139,8 @@
     "transactions": "交易记录",
     "fundFlows": "资金流水",
     "addTransaction": "添加交易",
+    "showingRecords": "显示第 {start} 到 {end} 条，共 {total} 条",
+    "pageOf": "第 {current} 页，共 {total} 页",
     "editTransaction": "编辑交易记录",
     "addFundFlow": "添加流水",
     "editFundFlow": "编辑资金流水",
