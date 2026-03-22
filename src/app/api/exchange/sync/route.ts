@@ -1,18 +1,27 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { decrypt } from "@/lib/crypto";
-import { initializeAdapters, getAdapter } from "@/lib/exchange/registry";
+import { getExchangeAdapter } from "@/lib/exchange/adapter-factory";
 import type { ExchangeName, NormalizedTrade, NormalizedFundFlow } from "@/lib/exchange/types";
 import { sendBarkNotification } from "@/lib/bark-trigger";
 
 /**
  * POST - 触发指定交易所的数据同步
  *
- * Body: { exchange: ExchangeName, symbols?: string[] }
+ * Body: { exchange: ExchangeName, symbols?: string[], isAutomated?: boolean }
  */
 export async function POST(req: NextRequest) {
   try {
-    // 1. 身份验证
+    const isCron = req.headers.get("X-App-Cron") === process.env.CRON_SECRET;
+
+    // 1. 身份验证 (支持 JWT 或 Cron Secret)
+    if (isCron) {
+      // 如果是 Cron 触发，由于无法通过 JWT 获取特定 User，
+      // 这里可以根据业务逻辑处理（如同步所有有效 API Key 的用户）
+      // 暂时保留逻辑或从 Body 获取 targetUserId (需安全校验)
+      return NextResponse.json({ error: "Cron support in progress" }, { status: 501 });
+    }
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -26,19 +35,24 @@ export async function POST(req: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = user.id;
 
-    // 2. 解析请求参数
+    // 2. 解析参数
     const { exchange, symbols } = (await req.json()) as {
       exchange: ExchangeName;
       symbols?: string[];
+      isAutomated?: boolean;
     };
     if (!exchange) return NextResponse.json({ error: "缺少 exchange 参数" }, { status: 400 });
 
-    // 3. 获取加密的 API Key
+    // 3. 获取适配器
+    const adapter = await getExchangeAdapter(exchange);
+
+    // 4. 获取加密的 API Key
     const { data: keyRecord, error: keyError } = await supabase
       .from("api_keys")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("exchange", exchange)
       .single();
 
@@ -46,7 +60,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `请先在设置中绑定 ${exchange} API Key` }, { status: 404 });
     }
 
-    // 4. 解密凭证
+    // 5. 解密凭证
     const credentials = {
       apiKey: decrypt(keyRecord.api_key_encrypted),
       apiSecret: decrypt(keyRecord.api_secret_encrypted),
@@ -54,10 +68,6 @@ export async function POST(req: NextRequest) {
         ? decrypt(keyRecord.passphrase_encrypted)
         : undefined,
     };
-
-    // 5. 初始化适配器并拉取数据
-    await initializeAdapters();
-    const adapter = getAdapter(exchange);
 
     const syncParams = {
       symbols,
@@ -71,10 +81,10 @@ export async function POST(req: NextRequest) {
     ]);
 
     // 6. 写入交易记录（去重）
-    const tradesInserted = await upsertTrades(supabase, user.id, trades);
+    const tradesInserted = await upsertTrades(supabase, userId, trades);
 
     // 7. 写入资金流水
-    const fundFlowsInserted = await insertFundFlows(supabase, user.id, [
+    const fundFlowsInserted = await insertFundFlows(supabase, userId, [
       ...deposits,
       ...withdrawals,
     ]);
@@ -88,7 +98,7 @@ export async function POST(req: NextRequest) {
     // 9. 触发 Bark 异步通知
     if (tradesInserted > 0 || fundFlowsInserted > 0) {
       sendBarkNotification(
-        user.id,
+        userId,
         "🔄 TradeLens 同步完成",
         `[${exchange.toUpperCase()}] 成功同步 ${tradesInserted} 笔交易, ${fundFlowsInserted} 笔资金流水。`
       ).catch(console.error); // 异步不阻塞

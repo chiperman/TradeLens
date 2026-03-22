@@ -35,10 +35,9 @@ export function getRegisteredExchanges(): ExchangeName[] {
   return Array.from(adapterMap.keys());
 }
 
-/**
- * 初始化所有适配器（在应用启动时调用）
- */
 export async function initializeAdapters(): Promise<void> {
+  if (getRegisteredExchanges().length > 0) return;
+
   const { BinanceAdapter } = await import("./binance");
   const { BitgetAdapter } = await import("./bitget");
   const { OkxAdapter } = await import("./okx");
