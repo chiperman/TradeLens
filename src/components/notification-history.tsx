@@ -25,6 +25,36 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
     useNotificationLogs();
   const [isClearing, setIsClearing] = useState(false);
   const [isPageChanging, setIsPageChanging] = useState(false);
+  const [displayLogs, setDisplayLogs] = useState(logs);
+
+  // 同步 logs 到 displayLogs，并处理“先删后增”的选择性更新逻辑
+  useEffect(() => {
+    // 如果是页码切换，或者初次加载，或者清空列表，直接同步
+    if (isPageChanging || logs.length === 0 || displayLogs.length === 0) {
+      setDisplayLogs(logs);
+      return;
+    }
+
+    // 检测是否有新消息插入（通常意味着第一条 ID 不同）
+    const isNewInsertion = logs[0]?.id !== displayLogs[0]?.id;
+
+    if (isNewInsertion && page === 0) {
+      // 策略：先移除 displayLogs 的最后一条，触发 exit 动画
+      // 此时 DOM 中的元素从 10 变为 9，为新元素的进入腾出空间
+      const temp = [...displayLogs];
+      temp.pop();
+      setDisplayLogs(temp);
+
+      // 延迟一段时间（匹配 framer-motion 0.3s 的 exit 动画），再插入最新全量数据
+      const timer = setTimeout(() => {
+        setDisplayLogs(logs);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      // 其他情况（如翻页、非首页刷新）直接同步
+      setDisplayLogs(logs);
+    }
+  }, [logs, isPageChanging, page]);
 
   // 监听页码变化，短时间内禁用动画以实现“直接展示”
   useEffect(() => {
@@ -115,7 +145,7 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
                 {/* List Container */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
                   <AnimatePresence initial={false}>
-                    {logs.map((log) => (
+                    {displayLogs.map((log) => (
                       <motion.div
                         layout={!isPageChanging}
                         key={log.id}
