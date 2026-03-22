@@ -268,6 +268,7 @@
     "SyncHistory": {
       "title": "同步日志",
       "subtitle": "最近 50 次交易所自动化对账记录",
+      "loading": "加载同步日志...",
       "noHistory": "暂无同步记录",
       "trades": "交易",
       "fundFlows": "资金流水",
@@ -287,8 +288,7 @@
         "status": "状态",
         "results": "结果",
         "type": "类型",
-        "duration": "耗时",
-        "loading": "加载同步日志..."
+        "duration": "耗时"
       }
     }
   },
