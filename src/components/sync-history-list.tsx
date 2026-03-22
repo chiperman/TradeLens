@@ -3,16 +3,25 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCcw, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { RefreshCcw, CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { getSyncHistory } from "@/app/actions/sync-history";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-interface SyncHistory {
+export interface SyncHistory {
   id: string;
   user_id: string;
   exchange: string;
-  status: "pending" | "success" | "failed";
+  status: "pending" | "success" | "failed" | "partial";
   trades_count: number;
   fund_flows_count: number;
   error_message?: string;
@@ -21,23 +30,65 @@ interface SyncHistory {
   is_automated: boolean;
 }
 
-export function SyncHistoryList() {
-  const [history, setHistory] = useState<SyncHistory[]>([]);
-  const [loading, setLoading] = useState(true);
+export function SyncHistoryList({ 
+  limit = 10,
+  initialData = []
+}: { 
+  limit?: number;
+  initialData?: SyncHistory[];
+}) {
+  const t = useTranslations("Settings.SyncHistory");
+  const [history, setHistory] = useState<SyncHistory[]>(initialData);
+  const [loading, setLoading] = useState(initialData.length === 0);
 
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getSyncHistory();
-      setHistory(data);
+      const data = await getSyncHistory(limit);
+      setHistory(data as SyncHistory[]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [limit]);
 
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "success":
+        return (
+          <Badge variant="success" className="flex w-fit items-center gap-1 bg-green-100 text-green-700 hover:bg-green-100">
+            <CheckCircle2 className="h-3 w-3" />
+            {t("status.success")}
+          </Badge>
+        );
+      case "failed":
+        return (
+          <Badge variant="destructive" className="flex w-fit items-center gap-1">
+            <XCircle className="h-3 w-3" />
+            {t("status.failed")}
+          </Badge>
+        );
+      case "pending":
+        return (
+          <Badge variant="secondary" className="flex w-fit items-center gap-1">
+            <Clock className="h-3 w-3 animate-pulse" />
+            {t("status.pending")}
+          </Badge>
+        );
+      case "partial":
+        return (
+          <Badge variant="warning" className="flex w-fit items-center gap-1 bg-amber-100 text-amber-700 hover:bg-amber-100">
+            <AlertCircle className="h-3 w-3" />
+            {t("status.partial")}
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
 
   return (
     <Card className="border-dashed">
@@ -47,55 +98,71 @@ export function SyncHistoryList() {
             <RefreshCcw className={cn("w-5 h-5 text-blue-600", loading && "animate-spin")} />
           </div>
           <div>
-            <CardTitle>同步日志</CardTitle>
-            <CardDescription>最近 10 次交易所自动化对账记录</CardDescription>
+            <CardTitle>{t("title")}</CardTitle>
+            <CardDescription>{t("subtitle")}</CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        {loading && history.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">加载中...</div>
-        ) : history.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">暂无同步记录</div>
-        ) : (
-          <div className="space-y-3">
-            {history.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between p-3 rounded-xl border bg-slate-50/50"
-              >
-                <div className="flex items-center gap-3">
-                  {item.status === "success" ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  ) : item.status === "failed" ? (
-                    <XCircle className="w-4 h-4 text-red-500" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-amber-500 animate-pulse" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium uppercase">{item.exchange}</p>
-                    <p className="text-[10px] text-muted-foreground">
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="pl-6">{t("table.time")}</TableHead>
+              <TableHead>{t("table.exchange")}</TableHead>
+              <TableHead>{t("table.status")}</TableHead>
+              <TableHead>{t("table.results")}</TableHead>
+              <TableHead>{t("table.type")}</TableHead>
+              <TableHead className="text-right pr-6">{t("table.duration")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading && history.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  {t("loading")}
+                </TableCell>
+              </TableRow>
+            ) : history.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  {t("noHistory")}
+                </TableCell>
+              </TableRow>
+            ) : (
+              history.map((item) => {
+                const duration = item.completed_at
+                  ? Math.round(
+                      (new Date(item.completed_at).getTime() - new Date(item.started_at).getTime()) / 1000
+                    )
+                  : null;
+
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium pl-6 whitespace-nowrap">
                       {format(new Date(item.started_at), "yyyy-MM-dd HH:mm:ss")}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  {item.status === "success" ? (
-                    <span className="text-[10px] font-mono bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
-                      +{item.trades_count} Trades
-                    </span>
-                  ) : item.status === "failed" ? (
-                    <span className="text-[10px] text-red-500 max-w-[150px] truncate block">
-                      {item.error_message}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">进行中...</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                    </TableCell>
+                    <TableCell className="capitalize">{item.exchange}</TableCell>
+                    <TableCell>{getStatusBadge(item.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col text-[10px] leading-tight text-muted-foreground">
+                        <span>{t("trades")}: {item.trades_count}</span>
+                        <span>{t("fundFlows")}: {item.fund_flows_count}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] py-0">
+                        {item.is_automated ? t("type.auto") : t("type.manual")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground pr-6 text-xs">
+                      {duration !== null ? `${duration}s` : "-"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

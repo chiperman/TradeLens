@@ -10,6 +10,7 @@
 
 ## ✅ Recently Completed
 
+- [x] 完成 Phase 7.1: 自动化同步 UI 与监控 (SyncHistory & Status Indicator)
 - [x] 完成 Phase 6: 性能优化 (React.lazy)、Bark 通知集成、i18n 补全
 
 ## 📅 Upcoming (Phase 7.2+)

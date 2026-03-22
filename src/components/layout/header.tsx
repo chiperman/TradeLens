@@ -2,6 +2,7 @@
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import LanguageSwitcher from "@/components/language-switcher";
+import { SyncStatus } from "./sync-status";
 
 export function Header() {
   return (
@@ -16,6 +17,7 @@ export function Header() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
+        <SyncStatus />
         <LanguageSwitcher />
         <ThemeToggle />
       </div>

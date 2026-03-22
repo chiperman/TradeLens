@@ -332,8 +332,8 @@ Phase 6: 通知与优化收尾（~1 周）
 
 - [x] 重构适配器工厂与注册表 (adapter-factory.ts)
 - [x] 实现 SyncManager 核心逻辑与同步历史记录
-- [ ] 实现基于 Cron 的多用户批量同步逻辑
-- [ ] 增加同步状态监控 Dashboard
+- [x] 实现基于 Cron 的多用户批量同步逻辑
+- [x] 增加同步状态监控 (SyncHistory 页面 & Header 指示器)
 
 ---
 

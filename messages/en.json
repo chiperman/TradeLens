@@ -25,7 +25,9 @@
     "options": "Options",
     "settings": "Settings",
     "signOut": "Sign Out",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "syncing": "Syncing...",
+    "syncIdle": "Synced"
   },
   "Auth": {
     "login": "Log In",
@@ -260,7 +262,32 @@
     "syncFailed": "Sync failed",
     "testConnection": "Test Connection",
     "connectionSuccess": "Connected",
-    "connectionFailed": "Connection failed"
+    "connectionFailed": "Connection failed",
+    "SyncHistory": {
+      "title": "Sync History",
+      "subtitle": "Recent 50 automated exchange synchronization records",
+      "noHistory": "No synchronization records found",
+      "trades": "Trades",
+      "fundFlows": "Fund Flows",
+      "status": {
+        "pending": "Pending",
+        "success": "Success",
+        "partial": "Partial",
+        "failed": "Failed"
+      },
+      "type": {
+        "auto": "Auto",
+        "manual": "Manual"
+      },
+      "table": {
+        "time": "Time",
+        "exchange": "Exchange",
+        "status": "Status",
+        "results": "Results",
+        "type": "Type",
+        "duration": "Duration"
+      }
+    }
   },
   "Notifications": {
     "title": "Push Notifications",

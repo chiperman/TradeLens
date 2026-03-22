@@ -27,7 +27,9 @@
     "profitStatus": "盈亏状态：",
     "settings": "设置",
     "signOut": "退出登录",
-    "collapse": "收起侧边栏"
+    "collapse": "收起侧边栏",
+    "syncing": "同步中...",
+    "syncIdle": "数据已同步"
   },
   "Options": {
     "title": "期权管理",
@@ -260,7 +262,32 @@
     "syncFailed": "同步失败",
     "testConnection": "测试连接",
     "connectionSuccess": "连接成功",
-    "connectionFailed": "连接失败"
+    "connectionFailed": "连接失败",
+    "SyncHistory": {
+      "title": "同步日志",
+      "subtitle": "最近 50 次交易所自动化对账记录",
+      "noHistory": "暂无同步记录",
+      "trades": "交易",
+      "fundFlows": "资金流水",
+      "status": {
+        "pending": "进行中",
+        "success": "成功",
+        "partial": "部分成功",
+        "failed": "失败"
+      },
+      "type": {
+        "auto": "自动",
+        "manual": "手动"
+      },
+      "table": {
+        "time": "时间",
+        "exchange": "交易所",
+        "status": "状态",
+        "results": "结果",
+        "type": "类型",
+        "duration": "耗时"
+      }
+    }
   },
   "Notifications": {
     "title": "推送通知",
