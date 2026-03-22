@@ -16,7 +16,7 @@ import {
 import { format } from "date-fns";
 import { sileo } from "sileo";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+
 // Removed unused Table imports
 
 export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number }) {
@@ -24,44 +24,6 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
   const { logs, loading, clearLogs, refresh, page, setPage, total, totalPages } =
     useNotificationLogs();
   const [isClearing, setIsClearing] = useState(false);
-  const [isPageChanging, setIsPageChanging] = useState(false);
-  const [displayLogs, setDisplayLogs] = useState(logs);
-
-  // 同步 logs 到 displayLogs，并处理“先删后增”的选择性更新逻辑
-  useEffect(() => {
-    // 如果是页码切换，或者初次加载，或者清空列表，直接同步
-    if (isPageChanging || logs.length === 0 || displayLogs.length === 0) {
-      setDisplayLogs(logs);
-      return;
-    }
-
-    // 检测是否有新消息插入（通常意味着第一条 ID 不同）
-    const isNewInsertion = logs[0]?.id !== displayLogs[0]?.id;
-
-    if (isNewInsertion && page === 0) {
-      // 策略：先移除 displayLogs 的最后一条，触发 exit 动画
-      // 此时 DOM 中的元素从 10 变为 9，为新元素的进入腾出空间
-      const temp = [...displayLogs];
-      temp.pop();
-      setDisplayLogs(temp);
-
-      // 延迟一段时间（匹配 framer-motion 0.3s 的 exit 动画），再插入最新全量数据
-      const timer = setTimeout(() => {
-        setDisplayLogs(logs);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else {
-      // 其他情况（如翻页、非首页刷新）直接同步
-      setDisplayLogs(logs);
-    }
-  }, [logs, isPageChanging, page]);
-
-  // 监听页码变化，短时间内禁用动画以实现“直接展示”
-  useEffect(() => {
-    setIsPageChanging(true);
-    const timer = setTimeout(() => setIsPageChanging(false), 100);
-    return () => clearTimeout(timer);
-  }, [page]);
 
   useEffect(() => {
     if (refreshKey > 0) {
@@ -144,38 +106,27 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
 
                 {/* List Container */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
-                  <AnimatePresence initial={false}>
-                    {displayLogs.map((log) => (
-                      <motion.div
-                        layout={!isPageChanging}
-                        key={log.id}
-                        initial={isPageChanging ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={isPageChanging ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                        transition={{
-                          duration: isPageChanging ? 0 : 0.3,
-                          ease: [0.32, 0.72, 0, 1],
-                          opacity: { duration: isPageChanging ? 0 : 0.2 },
-                        }}
-                        className="grid grid-cols-[60px_1fr_1fr_120px] items-center px-6 h-[48px] border-b last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors"
-                      >
-                        <div className="flex items-center">
-                          {log.status === "success" ? (
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-red-500" />
-                          )}
-                        </div>
-                        <div className="font-medium text-sm truncate pr-4">{log.title}</div>
-                        <div className="text-xs text-muted-foreground hidden md:block px-6 max-w-[300px] truncate">
-                          {log.body}
-                        </div>
-                        <div className="text-right text-[10px] text-muted-foreground tabular-nums">
-                          {format(new Date(log.created_at), "MM-dd HH:mm")}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+                  {logs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="grid grid-cols-[60px_1fr_1fr_120px] items-center px-6 h-[48px] border-b last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors"
+                    >
+                      <div className="flex items-center">
+                        {log.status === "success" ? (
+                          <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-500" />
+                        )}
+                      </div>
+                      <div className="font-medium text-sm truncate pr-4">{log.title}</div>
+                      <div className="text-xs text-muted-foreground hidden md:block px-6 max-w-[300px] truncate">
+                        {log.body}
+                      </div>
+                      <div className="text-right text-[10px] text-muted-foreground tabular-nums">
+                        {format(new Date(log.created_at), "MM-dd HH:mm")}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="flex items-center justify-between px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-900/50">
