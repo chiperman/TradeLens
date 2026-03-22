@@ -17,16 +17,7 @@ import { format } from "date-fns";
 import { sileo } from "sileo";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-const MotionTableRow = motion(TableRow);
+// Removed unused Table imports
 
 export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number }) {
   const t = useTranslations("Notifications");
@@ -113,52 +104,49 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
           ) : (
             <>
               <div className="h-[525px] overflow-hidden flex flex-col">
-                <Table className="table-fixed">
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="w-[80px] px-6">{t("status")}</TableHead>
-                      <TableHead className="px-6">{t("columnTitle")}</TableHead>
-                      <TableHead className="px-6 hidden md:table-cell">
-                        {t("columnContent")}
-                      </TableHead>
-                      <TableHead className="text-right px-6">{t("columnTime")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <AnimatePresence initial={false}>
-                      {logs.map((log) => (
-                        <MotionTableRow
-                          layout={!isPageChanging}
-                          key={log.id}
-                          initial={isPageChanging ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={isPageChanging ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                          transition={{
-                            duration: isPageChanging ? 0 : 0.3,
-                            ease: [0.32, 0.72, 0, 1],
-                            opacity: { duration: isPageChanging ? 0 : 0.2 },
-                          }}
-                          className="h-[48px]"
-                        >
-                          <TableCell className="px-6">
-                            {log.status === "success" ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-500" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-red-500" />
-                            )}
-                          </TableCell>
-                          <TableCell className="font-medium px-6">{log.title}</TableCell>
-                          <TableCell className="text-muted-foreground px-6 hidden md:table-cell max-w-[300px] truncate">
-                            {log.body}
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground px-6 text-xs tabular-nums">
-                            {format(new Date(log.created_at), "MM-dd HH:mm")}
-                          </TableCell>
-                        </MotionTableRow>
-                      ))}
-                    </AnimatePresence>
-                  </TableBody>
-                </Table>
+                {/* Custom Header */}
+                <div className="grid grid-cols-[60px_1fr_1fr_120px] items-center px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b bg-slate-50/50 dark:bg-slate-900/50">
+                  <div>{t("status")}</div>
+                  <div>{t("columnTitle")}</div>
+                  <div className="hidden md:block px-6">{t("columnContent")}</div>
+                  <div className="text-right">{t("columnTime")}</div>
+                </div>
+
+                {/* List Container */}
+                <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
+                  <AnimatePresence initial={false}>
+                    {logs.map((log) => (
+                      <motion.div
+                        layout={!isPageChanging}
+                        key={log.id}
+                        initial={isPageChanging ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={isPageChanging ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                        transition={{
+                          duration: isPageChanging ? 0 : 0.3,
+                          ease: [0.32, 0.72, 0, 1],
+                          opacity: { duration: isPageChanging ? 0 : 0.2 },
+                        }}
+                        className="grid grid-cols-[60px_1fr_1fr_120px] items-center px-6 h-[48px] border-b last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors"
+                      >
+                        <div className="flex items-center">
+                          {log.status === "success" ? (
+                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-500" />
+                          )}
+                        </div>
+                        <div className="font-medium text-sm truncate pr-4">{log.title}</div>
+                        <div className="text-xs text-muted-foreground hidden md:block px-6 max-w-[300px] truncate">
+                          {log.body}
+                        </div>
+                        <div className="text-right text-[10px] text-muted-foreground tabular-nums">
+                          {format(new Date(log.created_at), "MM-dd HH:mm")}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
               </div>
               <div className="flex items-center justify-between px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="text-xs text-muted-foreground">
