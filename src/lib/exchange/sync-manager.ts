@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
 import { decrypt } from "@/lib/crypto";
 import { getExchangeAdapter } from "./adapter-factory";
 import { sendBarkNotification } from "@/lib/bark-trigger";
@@ -24,7 +24,7 @@ export class SyncManager {
     options: { isAutomated?: boolean; symbols?: string[] } = {}
   ) {
     const syncId = crypto.randomUUID();
-    const startTime = Date.now();
+    // const startTime = Date.now();
 
     try {
       // 1. 获取 API Key
@@ -115,6 +115,13 @@ export class SyncManager {
         error_message: errorMessage,
         completed_at: new Date().toISOString(),
       });
+
+      // 发起失败告警通知
+      await sendBarkNotification(
+        userId,
+        `⚠️ ${exchange.toUpperCase()} 同步失败`,
+        `原因: ${errorMessage}。请检查 API Key 是否有效。`
+      ).catch(console.error);
 
       throw err;
     }

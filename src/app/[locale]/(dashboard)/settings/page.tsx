@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { BarkSettings } from "@/components/bark-settings";
 import { NotificationHistory } from "@/components/notification-history";
+import { SyncHistoryList } from "@/components/sync-history-list";
 
 export default function SettingsPage() {
   const tNav = useTranslations("Nav");
@@ -14,6 +15,7 @@ export default function SettingsPage() {
       </div>
 
       <BarkSettings />
+      <SyncHistoryList />
       <NotificationHistory />
     </div>
   );
