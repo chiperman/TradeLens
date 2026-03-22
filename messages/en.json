@@ -312,6 +312,11 @@
     "clearSuccess": "Push history cleared",
     "clearFailed": "Failed to clear history",
     "loadMore": "Load More",
-    "noMore": "No more records"
+    "noMore": "No more records",
+    "status": "Status",
+    "columnTitle": "Title",
+    "columnContent": "Content",
+    "columnTime": "Time",
+    "pagination": "Page {current} of {total}"
   }
 }

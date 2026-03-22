@@ -13,35 +13,41 @@ export interface NotificationLog {
   created_at: string;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 const supabase = createClient();
 
 export function useNotificationLogs() {
   const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
 
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  const fetchLogs = useCallback(async (silent: boolean = false) => {
+  const fetchLogs = useCallback(async (targetPage: number, silent: boolean = false) => {
     if (!silent) setLoading(true);
     setError(null);
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
 
-      const { data, error: fetchError } = await supabase
+      const from = targetPage * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const {
+        data,
+        error: fetchError,
+        count,
+      } = await supabase
         .from("notification_logs")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("user_id", user.user.id)
         .order("created_at", { ascending: false })
-        .limit(PAGE_SIZE);
+        .range(from, to);
 
       if (fetchError) throw fetchError;
 
       setLogs(data as NotificationLog[]);
-      setHasMore(data.length === PAGE_SIZE);
+      if (count !== null) setTotal(count);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch logs");
     } finally {
@@ -49,43 +55,9 @@ export function useNotificationLogs() {
     }
   }, []);
 
-  const loadMoreLogs = async () => {
-    if (loadingMore || !hasMore) return;
-    setLoadingMore(true);
-    setError(null);
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
-
-      const currentLength = logs.length;
-
-      const { data, error: fetchError } = await supabase
-        .from("notification_logs")
-        .select("*")
-        .eq("user_id", user.user.id)
-        .order("created_at", { ascending: false })
-        .range(currentLength, currentLength + PAGE_SIZE - 1);
-
-      if (fetchError) throw fetchError;
-
-      setLogs((prev) => {
-        // Prevent accidental duplications by checking IDs
-        const newItems = (data as NotificationLog[]).filter(
-          (d) => !prev.some((p) => p.id === d.id)
-        );
-        return [...prev, ...newItems];
-      });
-      setHasMore(data.length === PAGE_SIZE);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load more logs");
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
   useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
+    fetchLogs(page);
+  }, [page, fetchLogs]);
 
   const clearLogs = async () => {
     try {
@@ -99,9 +71,18 @@ export function useNotificationLogs() {
 
       if (deleteError) throw deleteError;
       setLogs([]);
-      setHasMore(false);
+      setTotal(0);
+      setPage(0);
     } catch (err) {
       throw err instanceof Error ? err : new Error("Failed to clear logs");
+    }
+  };
+
+  const refresh = async () => {
+    if (page === 0) {
+      await fetchLogs(0, true);
+    } else {
+      setPage(0);
     }
   };
 
@@ -110,9 +91,10 @@ export function useNotificationLogs() {
     loading,
     error,
     clearLogs,
-    refresh: () => fetchLogs(true),
-    hasMore,
-    loadingMore,
-    loadMoreLogs,
+    refresh,
+    page,
+    setPage,
+    total,
+    totalPages: Math.ceil(total / PAGE_SIZE),
   };
 }

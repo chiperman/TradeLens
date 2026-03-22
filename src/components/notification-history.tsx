@@ -4,15 +4,33 @@ import { useTranslations } from "next-intl";
 import { useNotificationLogs } from "@/hooks/use-notification-logs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2, Clock, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Loader2,
+  Trash2,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { format } from "date-fns";
 import { sileo } from "sileo";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+const MotionTableRow = motion(TableRow);
 
 export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number }) {
   const t = useTranslations("Notifications");
-  const { logs, loading, clearLogs, refresh, hasMore, loadingMore, loadMoreLogs } =
+  const { logs, loading, clearLogs, refresh, page, setPage, total, totalPages } =
     useNotificationLogs();
   const [isClearing, setIsClearing] = useState(false);
 
@@ -35,7 +53,7 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
     }
   };
 
-  if (loading) {
+  if (loading && logs.length === 0) {
     return (
       <Card className="border-dashed">
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -46,27 +64,28 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
   }
 
   return (
-    <Card className="border-dashed">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="border-dashed overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-            <Clock className="w-5 h-5 text-slate-600" />
+          <div className="p-2.5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <Clock className="w-5 h-5 text-slate-600 dark:text-slate-400" />
           </div>
           <div>
-            <CardTitle>{t("historyTitle", { fallback: "Notification History" })}</CardTitle>
+            <CardTitle className="text-lg">
+              {t("historyTitle", { fallback: "Notification History" })}
+            </CardTitle>
             <CardDescription>
               {t("historyDesc", { fallback: "Recent push notifications" })}
             </CardDescription>
           </div>
         </div>
-
         {logs.length > 0 && (
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClear}
             disabled={isClearing}
-            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             {isClearing ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -77,69 +96,87 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
           </Button>
         )}
       </CardHeader>
-
-      <CardContent>
-        {logs.length === 0 ? (
-          <div className="py-12 text-center text-sm text-slate-400 font-medium">
-            {t("emptyHistory", { fallback: "No notification history" })}
-          </div>
-        ) : (
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 pb-4">
-            <AnimatePresence initial={false}>
-              {logs.map((log) => (
-                <motion.div
-                  layout
-                  key={log.id}
-                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="flex gap-4 p-4 rounded-xl border bg-slate-50/50 hover:bg-white hover:shadow-sm"
-                >
-                  <div className="mt-0.5">
-                    {log.status === "success" ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-500" />
-                    )}
-                  </div>
-                  <div className="space-y-1 flex-1">
-                    <div className="flex justify-between items-start gap-2">
-                      <p className="font-semibold text-sm text-slate-900">{log.title}</p>
-                      <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                        {format(new Date(log.created_at), "MM-dd HH:mm")}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 leading-relaxed">{log.body}</p>
-                    {log.error_message && (
-                      <p className="text-[10px] text-red-500 bg-red-50 p-1.5 rounded mt-2">
-                        {log.error_message}
-                      </p>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {logs.length > 0 && hasMore && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={loadMoreLogs}
-                disabled={loadingMore}
-                className="w-full mt-2 text-slate-500 hover:text-slate-700"
-              >
-                {loadingMore && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {t("loadMore", { fallback: "Load More" })}
-              </Button>
-            )}
-            {logs.length > 0 && !hasMore && (
-              <div className="text-center text-xs text-slate-400 py-4 mt-2">
-                {t("noMore", { fallback: "No more records" })}
+      <CardContent className="p-0">
+        <div className="border-t">
+          {logs.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              {t("emptyHistory", { fallback: "No notification history" })}
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-[80px] px-6">{t("status")}</TableHead>
+                    <TableHead className="px-6">{t("columnTitle")}</TableHead>
+                    <TableHead className="px-6 hidden md:table-cell">
+                      {t("columnContent")}
+                    </TableHead>
+                    <TableHead className="text-right px-6">{t("columnTime")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    {logs.map((log) => (
+                      <MotionTableRow
+                        key={log.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <TableCell className="px-6">
+                          {log.status === "success" ? (
+                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-500" />
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium px-6">{log.title}</TableCell>
+                        <TableCell className="text-muted-foreground px-6 hidden md:table-cell max-w-[300px] truncate">
+                          {log.body}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground px-6 text-xs tabular-nums">
+                          {format(new Date(log.created_at), "MM-dd HH:mm")}
+                        </TableCell>
+                      </MotionTableRow>
+                    ))}
+                  </AnimatePresence>
+                </TableBody>
+              </Table>
+              <div className="flex items-center justify-between px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="text-xs text-muted-foreground">
+                  {t("pagination", {
+                    current: page + 1,
+                    total: totalPages || 1,
+                    fallback: `Page ${page + 1} of ${totalPages || 1}`,
+                  })}
+                  <span className="ml-2">({total} items)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    disabled={page === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                    disabled={page >= totalPages - 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -314,6 +314,11 @@
     "clearFailed": "清空记录失败",
     "loading": "加载推送配置...",
     "loadMore": "加载更多",
-    "noMore": "已加载全部"
+    "noMore": "已加载全部",
+    "status": "状态",
+    "columnTitle": "标题",
+    "columnContent": "内容",
+    "columnTime": "时间",
+    "pagination": "第 {current} / {total} 页"
   }
 }
