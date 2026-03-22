@@ -104,51 +104,53 @@ export function NotificationHistory({ refreshKey = 0 }: { refreshKey?: number })
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-[80px] px-6">{t("status")}</TableHead>
-                    <TableHead className="px-6">{t("columnTitle")}</TableHead>
-                    <TableHead className="px-6 hidden md:table-cell">
-                      {t("columnContent")}
-                    </TableHead>
-                    <TableHead className="text-right px-6">{t("columnTime")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <AnimatePresence mode="popLayout" initial={false}>
-                    {logs.map((log) => (
-                      <MotionTableRow
-                        layout
-                        key={log.id}
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        transition={{
-                          duration: 0.3,
-                          ease: [0.32, 0.72, 0, 1],
-                          opacity: { duration: 0.2 },
-                        }}
-                      >
-                        <TableCell className="px-6">
-                          {log.status === "success" ? (
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-red-500" />
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium px-6">{log.title}</TableCell>
-                        <TableCell className="text-muted-foreground px-6 hidden md:table-cell max-w-[300px] truncate">
-                          {log.body}
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground px-6 text-xs tabular-nums">
-                          {format(new Date(log.created_at), "MM-dd HH:mm")}
-                        </TableCell>
-                      </MotionTableRow>
-                    ))}
-                  </AnimatePresence>
-                </TableBody>
-              </Table>
+              <div className="min-h-[545px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="w-[80px] px-6">{t("status")}</TableHead>
+                      <TableHead className="px-6">{t("columnTitle")}</TableHead>
+                      <TableHead className="px-6 hidden md:table-cell">
+                        {t("columnContent")}
+                      </TableHead>
+                      <TableHead className="text-right px-6">{t("columnTime")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <AnimatePresence initial={false}>
+                      {logs.map((log) => (
+                        <MotionTableRow
+                          layout
+                          key={log.id}
+                          initial={{ opacity: 0, y: -20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 20 }}
+                          transition={{
+                            duration: 0.3,
+                            ease: [0.32, 0.72, 0, 1],
+                            opacity: { duration: 0.2 },
+                          }}
+                        >
+                          <TableCell className="px-6">
+                            {log.status === "success" ? (
+                              <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium px-6">{log.title}</TableCell>
+                          <TableCell className="text-muted-foreground px-6 hidden md:table-cell max-w-[300px] truncate">
+                            {log.body}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground px-6 text-xs tabular-nums">
+                            {format(new Date(log.created_at), "MM-dd HH:mm")}
+                          </TableCell>
+                        </MotionTableRow>
+                      ))}
+                    </AnimatePresence>
+                  </TableBody>
+                </Table>
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="text-xs text-muted-foreground">
                   {t("pagination", {
