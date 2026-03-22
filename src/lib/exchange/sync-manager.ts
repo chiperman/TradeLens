@@ -120,6 +120,51 @@ export class SyncManager {
     }
   }
 
+  /**
+   * 同步系统中所有活跃用户的交易所数据 (Cron 任务调用)
+   */
+  async syncAllUsers() {
+    const startTime = Date.now();
+    console.log("[SyncManager] 开始执行全系统批量同步...");
+
+    try {
+      // 1. 获取所有有效的 API Key 配置的用户与交易所组合
+      const { data: keys, error: keysError } = await this.supabase
+        .from("api_keys")
+        .select("user_id, exchange");
+
+      if (keysError) throw keysError;
+      if (!keys || keys.length === 0) {
+        console.log("[SyncManager] 未找到待同步的 API Key");
+        return { success: true, count: 0 };
+      }
+
+      console.log(`[SyncManager] 发现 ${keys.length} 个同步任务，准备并行执行...`);
+
+      // 2. 并行同步 (带错误捕获，避免单用户失败导致全部中断)
+      // TODO: 如果用户量大，这里应引入 p-limit 控制并发
+      const results = await Promise.allSettled(
+        keys.map((k) =>
+          this.syncUserExchange(k.user_id, k.exchange as ExchangeName, { isAutomated: true })
+        )
+      );
+
+      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      const failedCount = results.filter((r) => r.status === "rejected").length;
+
+      console.log(
+        `[SyncManager] 批量同步完成。成功: ${successCount}, 失败: ${failedCount}, 耗时: ${
+          Date.now() - startTime
+        }ms`
+      );
+
+      return { success: true, successCount, failedCount };
+    } catch (err) {
+      console.error("[SyncManager] 批量同步过程中发生致命错误:", err);
+      throw err;
+    }
+  }
+
   private async upsertTrades(userId: string, trades: NormalizedTrade[]): Promise<number> {
     if (trades.length === 0) return 0;
     const rows = trades.map((t) => ({
