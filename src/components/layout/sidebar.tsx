@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
@@ -52,16 +52,21 @@ export function Sidebar({ onSignOut, userEmail }: SidebarProps) {
     localStorage.setItem("tradelens_sidebar_collapsed", String(next));
   };
 
-  const isActive = (href: string) => {
+  const pathWithoutLocale = useMemo(() => {
     // Strip locale prefix for matching, e.g. /zh/calculator -> /calculator
     const segments = pathname.split("/").filter(Boolean);
-    const pathWithoutLocale = "/" + segments.slice(1).join("/");
+    return "/" + segments.slice(1).join("/");
+  }, [pathname]);
 
-    if (href === "/") {
-      return pathWithoutLocale === "/" || pathWithoutLocale === "";
-    }
-    return pathWithoutLocale.startsWith(href);
-  };
+  const isActive = useCallback(
+    (href: string) => {
+      if (href === "/") {
+        return pathWithoutLocale === "/" || pathWithoutLocale === "";
+      }
+      return pathWithoutLocale.startsWith(href);
+    },
+    [pathWithoutLocale]
+  );
 
   return (
     <TooltipProvider delayDuration={0}>

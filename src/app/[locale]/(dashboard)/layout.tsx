@@ -1,48 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase";
-import { type User } from "@supabase/supabase-js";
-import { useRouter } from "@/i18n/routing";
+import { useUser } from "@/providers/user-provider";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const supabase = createClient();
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      setLoading(false);
-      if (!user) {
-        router.push("/login");
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (!currentUser) {
-        router.push("/login");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase, router]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading, signOut } = useUser();
 
   if (loading) {
     return (
@@ -61,13 +25,13 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar onSignOut={handleSignOut} userEmail={user.email} />
+      <Sidebar onSignOut={signOut} userEmail={user.email} />
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <Header />
 
         <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
-          <div className="p-6 max-w-7xl mx-auto">{children}</div>
+          <div className="p-6 max-w-7xl mx-auto tracking-tight">{children}</div>
         </main>
       </div>
 

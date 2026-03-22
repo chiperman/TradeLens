@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
+import { useUser } from "@/providers/user-provider";
 import type {
   Transaction,
   TransactionFormData,
@@ -19,6 +20,7 @@ const PAGE_SIZE = 20;
  */
 export function useTransactions(initialFilter?: TransactionFilter) {
   const supabase = createClient();
+  const { user: contextUser } = useUser();
   const [user, setUser] = useState<User | null>(null);
   const [filter, setFilter] = useState<TransactionFilter>(initialFilter ?? {});
   const [pagination, setPagination] = useState<PaginationState>({
@@ -32,8 +34,8 @@ export function useTransactions(initialFilter?: TransactionFilter) {
   });
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, [supabase]);
+    setUser(contextUser);
+  }, [contextUser]);
 
   const range = useMemo(() => {
     const from = (pagination.page - 1) * pagination.pageSize;

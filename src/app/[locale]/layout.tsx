@@ -43,6 +43,8 @@ export async function generateMetadata({
   };
 }
 
+import { UserProvider } from "@/providers/user-provider";
+
 export default async function RootLayout({
   children,
   params,
@@ -82,7 +84,7 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <UserProvider>{children}</UserProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>
