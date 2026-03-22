@@ -20,8 +20,8 @@ export function useNotificationLogs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
+  const fetchLogs = useCallback(async (silent: boolean = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const { data: user } = await supabase.auth.getUser();
@@ -40,7 +40,7 @@ export function useNotificationLogs() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch logs");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -70,6 +70,6 @@ export function useNotificationLogs() {
     loading,
     error,
     clearLogs,
-    refresh: fetchLogs,
+    refresh: () => fetchLogs(true),
   };
 }
