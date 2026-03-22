@@ -2,14 +2,10 @@ import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase-server";
 import { SyncHistoryList, type SyncHistory } from "@/components/sync-history-list";
 
-export default async function SyncHistoryPage({
-  params: { locale: _locale },
-}: {
-  params: { locale: string };
-}) {
+export default async function SyncHistoryPage() {
   const t = await getTranslations("Settings.SyncHistory");
   const supabase = await createClient();
- 
+
   const { data: history } = await supabase
     .from("sync_history")
     .select("*")
@@ -26,7 +22,7 @@ export default async function SyncHistoryPage({
       </div>
 
       <div className="rounded-xl border bg-card/50 backdrop-blur-sm">
-        <SyncHistoryList initialData={(history as any) || []} limit={50} />
+        <SyncHistoryList initialData={(history as unknown as SyncHistory[]) || []} limit={50} />
       </div>
     </div>
   );
