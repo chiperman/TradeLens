@@ -12,6 +12,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "longbridge:smoke": "tsx src/scripts/longbridge-smoke.ts",
     "db:generate": "drizzle-kit generate",
     "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
   },
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "tsx": "^4.21.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

@@ -31,6 +31,14 @@ LONGBRIDGE_ACCESS_TOKEN=
 LONGBRIDGE_LANGUAGE=zh-CN
 ```
 
+填写后可运行只读 smoke 检查：
+
+```bash
+pnpm longbridge:smoke
+```
+
+脚本只输出账户、持仓、当日成交数量和少量非敏感摘要，不打印凭证或原始响应。
+
 ## 质量检查
 
 ```bash
