@@ -22,6 +22,15 @@ pnpm dev
 
 使用集成功能前，需要在 `.env.local` 中填写 Supabase 和长桥凭证。
 
+长桥使用官方 Node SDK `longbridge`，本地凭证变量如下：
+
+```env
+LONGBRIDGE_APP_KEY=
+LONGBRIDGE_APP_SECRET=
+LONGBRIDGE_ACCESS_TOKEN=
+LONGBRIDGE_LANGUAGE=zh-CN
+```
+
 ## 质量检查
 
 ```bash

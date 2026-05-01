@@ -7,9 +7,10 @@ const clientEnvSchema = z.object({
 
 const serverEnvSchema = clientEnvSchema.extend({
   DATABASE_URL: z.string().min(1),
-  LONGPORT_APP_KEY: z.string().optional(),
-  LONGPORT_APP_SECRET: z.string().optional(),
-  LONGPORT_ACCESS_TOKEN: z.string().optional(),
+  LONGBRIDGE_APP_KEY: z.string().optional(),
+  LONGBRIDGE_APP_SECRET: z.string().optional(),
+  LONGBRIDGE_ACCESS_TOKEN: z.string().optional(),
+  LONGBRIDGE_LANGUAGE: z.enum(["zh-CN", "zh-HK", "en"]).optional(),
   CREDENTIAL_ENCRYPTION_KEY: z.string().optional(),
 });
 
