@@ -1,5 +1,6 @@
 import { Config, TradeContext, type Language } from "longbridge";
 import { getServerEnv } from "@/lib/env";
+import { mapAccountBalance, mapExecution, mapStockPositions } from "./mappers";
 import type { LongbridgeSyncPayload } from "./types";
 
 type LongbridgeCredentials = {
@@ -18,12 +19,17 @@ export class LongbridgeConnector {
   }
 
   async syncReadOnly(): Promise<LongbridgeSyncPayload> {
-    this.getTradeContext();
+    const tradeContext = this.getTradeContext();
+    const [accountBalances, stockPositionsResponse, executions] = await Promise.all([
+      tradeContext.accountBalance(),
+      tradeContext.stockPositions(),
+      tradeContext.todayExecutions(),
+    ]);
 
     return {
-      accountBalances: [],
-      positions: [],
-      executions: [],
+      accountBalances: accountBalances.map(mapAccountBalance),
+      positions: mapStockPositions(stockPositionsResponse),
+      executions: executions.map(mapExecution),
     };
   }
 
